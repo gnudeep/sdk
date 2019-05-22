@@ -173,6 +173,8 @@ func RunBuild(tag string, fileName string) {
 			util.ExitWithErrorMessage("Error in retrieving UID ", errUid)
 		}
 
+		fmt.Printf("UID %s", string(outUid))
+
 		cmd = exec.Command("docker", "exec", "-w", "/home/cellery/src", "-u", string(outUid),
 			strings.TrimSpace(string(out)), constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH, "run",
 			constants.BALLERINA_PRINT_RETURN_FLAG, fileName+":build", string(iName))
