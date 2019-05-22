@@ -165,7 +165,15 @@ func RunBuild(tag string, fileName string) {
 			}
 			time.Sleep(5 * time.Second)
 		}
-		cmd = exec.Command("docker", "exec", "-w", "/home/cellery/src", "-u", "1000",
+
+		cmdUid := exec.Command("id","-u","$USER")
+		outUid, errUid := cmdUid.Output()
+		if err != nil {
+			spinner.Stop(false)
+			util.ExitWithErrorMessage("Error in retrieving UID ", errUid)
+		}
+
+		cmd = exec.Command("docker", "exec", "-w", "/home/cellery/src", "-u", string(outUid),
 			strings.TrimSpace(string(out)), constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH, "run",
 			constants.BALLERINA_PRINT_RETURN_FLAG, fileName+":build", string(iName))
 	}
