@@ -166,14 +166,14 @@ func RunBuild(tag string, fileName string) {
 			time.Sleep(5 * time.Second)
 		}
 
-		cmdUid := exec.Command("docker", "exec", "-w", "/home/cellery/src", "useradd", "-m", "-u", "1001", "-g", "1000", os.Getenv("$USER"))
-		outUserAdd, errUserAdd := cmdUid.Output()
+		cmdUserAdd := exec.Command("docker", "exec", "-w", "/home/cellery/src", "useradd", "-m", "-u", "1001", "-g", "1000", os.Getenv("$USER"))
+		outUserAdd, errUserAdd := cmdUserAdd.Output()
 		if err != nil {
 			spinner.Stop(false)
-			util.ExitWithErrorMessage("Error in retrieving UID ", errUserAdd)
+			util.ExitWithErrorMessage("Error in adding user ", errUserAdd)
 		}
 
-		fmt.Printf("UID %s", string(outUserAdd))
+		fmt.Printf("UID %s\n", string(outUserAdd))
 
 		cmd = exec.Command("docker", "exec", "-w", "/home/cellery/src", "-u", "1001",
 			strings.TrimSpace(string(out)), constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH, "run",
