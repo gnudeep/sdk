@@ -30,6 +30,7 @@ import (
 	"os/user"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -172,14 +173,26 @@ func RunBuild(tag string, fileName string) {
 			panic(err)
 		}
 
-		cmdUserAdd := exec.Command("docker", "exec", strings.TrimSpace(string(out)), "useradd", "-m",
-			"-d", "/home/cellery", "--uid", cliUser.Uid, cliUser.Username)
-		_, errUserAdd := cmdUserAdd.Output()
-		if errUserAdd != nil {
-			spinner.Stop(false)
-			util.ExitWithErrorMessage("Error in adding Cellery executing user", errUserAdd)
-		}
+		if cliUser.Uid != "1000" {
+			cmdUserExist := exec.Command("docker", "exec", "id", "-u", cliUser.Username)
+			cmdUserEXistOut, errUserExist := cmdUserExist.Output()
+			if errUserExist != nil {
+				spinner.Stop(false)
+				util.ExitWithErrorMessage("Error in checking Cellery executing user", errUserExist)
+			}
 
+			re := regexp.MustCompile("[0-9]+")
+			if re.FindString(string(cmdUserEXistOut)) == "" {
+				cmdUserAdd := exec.Command("docker", "exec", strings.TrimSpace(string(out)), "useradd", "-m",
+					"-d", "/home/cellery", "--uid", cliUser.Uid, cliUser.Username)
+
+				_, errUserAdd := cmdUserAdd.Output()
+				if errUserAdd != nil {
+					spinner.Stop(false)
+					util.ExitWithErrorMessage("Error in adding Cellery executing user", errUserAdd)
+				}
+			}
+		}
 
 		cmd = exec.Command("docker", "exec", "-w", "/home/cellery/src", "-u", cliUser.Uid,
 			strings.TrimSpace(string(out)), constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH, "run",
