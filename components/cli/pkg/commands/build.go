@@ -27,6 +27,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"os/user"
 	"path"
 	"path/filepath"
 	"strings"
@@ -161,21 +162,26 @@ func RunBuild(tag string, fileName string) {
 			err = cmdDockerRun.Wait()
 			if err != nil {
 				spinner.Stop(false)
-				util.ExitWithErrorMessage("Docker Run Error %s\n", err)
+				util.ExitWithErrorMessage("Docker Run Error", err)
 			}
 			time.Sleep(5 * time.Second)
 		}
 
-		cmdUserAdd := exec.Command("docker", "exec", "-w", "/home/cellery/src", "useradd", "-m", "-u", "1001", "-g", "1000", os.Getenv("$USER"))
-		outUserAdd, errUserAdd := cmdUserAdd.Output()
+		cliUser, err := user.Current()
 		if err != nil {
-			spinner.Stop(false)
-			util.ExitWithErrorMessage("Error in adding user ", errUserAdd)
+			panic(err)
 		}
 
-		fmt.Printf("UID %s\n", string(outUserAdd))
+		cmdUserAdd := exec.Command("docker", "exec", strings.TrimSpace(string(out)), "useradd", "-m",
+			"-d", "/home/cellery", "--uid", cliUser.Uid, cliUser.Username)
+		_, errUserAdd := cmdUserAdd.Output()
+		if errUserAdd != nil {
+			spinner.Stop(false)
+			util.ExitWithErrorMessage("Error in adding Cellery executing user", errUserAdd)
+		}
 
-		cmd = exec.Command("docker", "exec", "-w", "/home/cellery/src", "-u", "1001",
+
+		cmd = exec.Command("docker", "exec", "-w", "/home/cellery/src", "-u", cliUser.Uid,
 			strings.TrimSpace(string(out)), constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH, "run",
 			constants.BALLERINA_PRINT_RETURN_FLAG, fileName+":build", string(iName))
 	}
