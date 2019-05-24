@@ -174,7 +174,8 @@ func RunBuild(tag string, fileName string) {
 		}
 
 		if cliUser.Uid != "1000" {
-			cmdUserExist := exec.Command("docker", "exec", "id", "-u", cliUser.Username)
+			cmdUserExist := exec.Command("docker", "exec", strings.TrimSpace(string(out)),
+				"id", "-u", cliUser.Username)
 			cmdUserEXistOut, errUserExist := cmdUserExist.Output()
 			if errUserExist != nil {
 				spinner.Stop(false)
