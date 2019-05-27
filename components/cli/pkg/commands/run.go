@@ -963,7 +963,7 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 					cmd.Args = append(cmd.Args, "-e", envVar.Key+"="+envVar.Value)
 				}
 			}
-			cmd.Args = append(cmd.Args, "-w", "/home/cellery/src", "-u", "1000",
+			cmd.Args = append(cmd.Args, "-w", "/home/cellery/src", "-u", cliUser.Uid,
 				strings.TrimSpace(string(containerId)), constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH, "run",
 				constants.BALLERINA_PRINT_RETURN_FLAG, balFilePath+":run",
 				string(iName), string(dependenciesJson))
