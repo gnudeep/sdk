@@ -943,8 +943,8 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 			cmdArgs = append(cmdArgs, "-e", constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+imageDir)
 
 			re := regexp.MustCompile(`^.*cellery-cell-image`)
-			balFilePath = re.ReplaceAllString(balFilePath, "/home/cellery/.cellery/tmp/cellery-cell-image")
-			dockerImageDir := re.ReplaceAllString(imageDir, "/home/cellery/.cellery/tmp/cellery-cell-image")
+			balFilePath = re.ReplaceAllString(balFilePath, "/home/"+cliUser.Username+"/.cellery/tmp/cellery-cell-image")
+			dockerImageDir := re.ReplaceAllString(imageDir, "/home/"+cliUser.Username+"/.cellery/tmp/cellery-cell-image")
 
 			cmd = exec.Command("docker", "exec", "-e", constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+dockerImageDir)
 			shellEnvs := os.Environ()
