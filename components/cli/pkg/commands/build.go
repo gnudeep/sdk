@@ -113,10 +113,8 @@ func RunBuild(tag string, fileName string) {
 				"--mount", "type=bind,source="+currentDir+",target=/home/cellery/src",
 				"--mount", "type=bind,source="+util.UserHomeDir()+string(os.PathSeparator)+".ballerina,target=/home/cellery/.ballerina",
 				"--mount", "type=bind,source="+util.UserHomeDir()+string(os.PathSeparator)+".cellery,target=/home/cellery/.cellery",
-				"--mount", "type=bind,source="+util.UserHomeDir()+string(os.PathSeparator)+".kube,target=/home/cellery/.kube",
 				"wso2cellery/ballerina-runtime:"+constants.CELLERY_RELEASE_VERSION, "sleep", "300",
 			)
-			//util.UserHomeDir()
 			stderrReader, err := cmdDockerRun.StderrPipe()
 			if err != nil {
 				spinner.Stop(false)
