@@ -905,7 +905,8 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 
 			if string(containerId) == "" {
 
-				cmdDockerRun := exec.Command("docker", "run", "-d", "-l", "ballerina-runtime="+constants.CELLERY_RELEASE_VERSION,
+				cmdDockerRun := exec.Command("docker", "run", "-d", "-l",
+					"ballerina-runtime="+constants.CELLERY_RELEASE_VERSION,
 					"--mount", "type=bind,source="+currentDir+",target=/home/cellery/src",
 					"--mount", "type=bind,source="+util.UserHomeDir()+string(os.PathSeparator)+".ballerina,target=/home/cellery/.ballerina",
 					"--mount", "type=bind,source="+util.UserHomeDir()+string(os.PathSeparator)+".cellery,target=/home/cellery/.cellery",
@@ -925,6 +926,8 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 				util.ExitWithErrorMessage("Error while retrieving the current user", err)
 			}
 
+			exeUid := constants.CELLERY_DOCKER_CLI_USER_ID
+
 			if cliUser.Uid != constants.CELLERY_DOCKER_CLI_USER_ID && runtime.GOOS == "linux" {
 				cmdUserExist := exec.Command("docker", "exec", strings.TrimSpace(string(containerId)),
 					"id", "-u", cliUser.Username)
@@ -938,13 +941,14 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 						util.ExitWithErrorMessage("Error in adding Cellery execution user", errUserAdd)
 					}
 				}
+				exeUid = cliUser.Uid
 			}
 
 			cmdArgs = append(cmdArgs, "-e", constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+imageDir)
 
 			re := regexp.MustCompile(`^.*cellery-cell-image`)
-			balFilePath = re.ReplaceAllString(balFilePath, "/home/"+cliUser.Username+"/.cellery/tmp/cellery-cell-image")
-			dockerImageDir := re.ReplaceAllString(imageDir, "/home/"+cliUser.Username+"/.cellery/tmp/cellery-cell-image")
+			balFilePath = re.ReplaceAllString(balFilePath, "/home/cellery/.cellery/tmp/cellery-cell-image")
+			dockerImageDir := re.ReplaceAllString(imageDir, "/home/cellery/.cellery/tmp/cellery-cell-image")
 
 			cmd = exec.Command("docker", "exec", "-e", constants.CELLERY_IMAGE_DIR_ENV_VAR+"="+dockerImageDir)
 			shellEnvs := os.Environ()
@@ -963,7 +967,7 @@ func startCellInstance(imageDir string, instanceName string, runningNode *depend
 					cmd.Args = append(cmd.Args, "-e", envVar.Key+"="+envVar.Value)
 				}
 			}
-			cmd.Args = append(cmd.Args, "-w", "/home/cellery/src", "-u", cliUser.Uid,
+			cmd.Args = append(cmd.Args, "-w", "/home/cellery/src", "-u", exeUid,
 				strings.TrimSpace(string(containerId)), constants.DOCKER_CLI_BALLERINA_EXECUTABLE_PATH, "run",
 				constants.BALLERINA_PRINT_RETURN_FLAG, balFilePath+":run",
 				string(iName), string(dependenciesJson))
