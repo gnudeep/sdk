@@ -369,4 +369,12 @@ func CreateCelleryDirStructure() {
 	CreateDir(filepath.Join(celleryHome, "repo"))
 	CreateDir(filepath.Join(celleryHome, "tmp"))
 	CreateDir(filepath.Join(celleryHome, "vm"))
+	CreateDir(filepath.Join(celleryHome, "helm-charts"))
+}
+
+func CopyHelmCharts(outPath string) {
+	helmChartsDir := filepath.Join(outPath, constants.HELM_CHARTS)
+	RemoveDir(helmChartsDir)
+	CreateDir(helmChartsDir)
+	CopyDir(filepath.Join(CelleryInstallationDir(), constants.HELM_CHARTS), helmChartsDir)
 }

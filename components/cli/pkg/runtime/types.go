@@ -30,3 +30,22 @@ const (
 	System           SystemComponent = "System"
 	Mysql            SystemComponent = "Mysql"
 )
+
+type T struct {
+	A string
+	B struct {
+		RenamedC int   `yaml:"c"`
+		D        []int `yaml:",flow"`
+	}
+}
+
+type CelleryRuntimeValues struct {
+	Db struct {
+		Carbon struct {
+			UserName string `yaml:"wso2carbon"`
+			UserPassword string `yaml:"wso2carbon"`
+		}
+	}
+
+
+}

@@ -21,6 +21,8 @@ package runtime
 import (
 	"encoding/json"
 	"fmt"
+	"log"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -88,13 +90,35 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 
 	// Apply Istio CRDs
 	spinner.SetNewAction("Applying istio crds")
-	if err := ApplyIstioCrds(artifactsPath); err != nil {
-		return fmt.Errorf("error creating istio crds: %v", err)
+	useHelmChartStatus := strings.Contains(strings.ToUpper(strings.TrimSpace(os.Getenv("HELM_BASED_CELLERY_SETUP"))), "TRUE")
+	if !useHelmChartStatus {
+		if err := ApplyIstioCrds(artifactsPath); err != nil {
+			return fmt.Errorf("error creating istio crds: %v", err)
+		}
+	} else {
+		// Apply Istio CRDs using Helm Charts
+		chartName := "istio-init"
+		log.Print("Deploying istion-init chart")
+		values := util.GetHelmChartsValues(chartName, filepath.Join(util.CelleryInstallationDir(), constants.HELM_CHARTS))
+		istioInitChart := filepath.Join(util.CelleryInstallationDir(), constants.HELM_CHARTS, chartName)
+		if err := ApplyIstioCrdsChart(istioInitChart, values); err != nil {
+			util.ExitWithErrorMessage("error creating istio crds: %v", err)
+		}
 	}
 	// Apply nginx resources
 	spinner.SetNewAction("Creating ingress-nginx")
-	if err := installNginx(artifactsPath, isLoadBalancerIngressMode); err != nil {
-		return fmt.Errorf("error installing ingress-nginx: %v", err)
+	if !useHelmChartStatus {
+		if err := installNginx(artifactsPath, isLoadBalancerIngressMode); err != nil {
+			return fmt.Errorf("error installing ingress-nginx: %v", err)
+		}
+	} else {
+		chartName := "ingress-controller"
+		log.Print("Deploying ingress-nginx chart")
+		values := util.GetHelmChartsValues(chartName, filepath.Join(util.CelleryInstallationDir(), constants.HELM_CHARTS))
+		ingressInitChart := filepath.Join(util.CelleryInstallationDir(), constants.HELM_CHARTS, chartName)
+		if err := ApplyIngresControllerChart(ingressInitChart, values); err != nil {
+			util.ExitWithErrorMessage("error creating ingress-controller: %v", err)
+		}
 	}
 	// sleep for few seconds - this is to make sure that the CRDs are properly applied
 	time.Sleep(20 * time.Second)
@@ -108,21 +132,50 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 
 	// Install istio
 	spinner.SetNewAction("Installing istio")
-	if err := InstallIstio(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS)); err != nil {
-		return fmt.Errorf("error installing istio: %v", err)
+	if !useHelmChartStatus {
+		if err := InstallIstio(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS)); err != nil {
+			return fmt.Errorf("error installing istio: %v", err)
+		}
+	} else {
+		chartName := "istio"
+		log.Print("Deploying istion chart")
+		values := util.GetHelmChartsCustomValues(chartName, filepath.Join(util.CelleryInstallationDir(), constants.HELM_CHARTS), "values-istio-demo.yaml")
+		istioInitChart := filepath.Join(util.CelleryInstallationDir(), constants.HELM_CHARTS, chartName)
+		if err := ApplyIstioCrdsChart(istioInitChart, values); err != nil {
+			util.ExitWithErrorMessage("error creating istio deployment: %v", err)
+		}
 	}
 
 	// Apply only knative serving CRD's
-	if err := ApplyKnativeCrds(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS)); err != nil {
-		return fmt.Errorf("error installing knative serving: %v", err)
+	if !useHelmChartStatus {
+		if err := ApplyKnativeCrds(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS)); err != nil {
+			return fmt.Errorf("error installing knative serving: %v", err)
+		}
+	} else {
+		chartName := "knative"
+		log.Print("Deploying knative chart")
+		values := util.GetHelmChartsValues(chartName, filepath.Join(util.CelleryInstallationDir(), constants.HELM_CHARTS))
+		knativeChart := filepath.Join(util.CelleryInstallationDir(), constants.HELM_CHARTS, chartName)
+		if err := ApplyKnativeCrdsChart(knativeChart, values); err != nil {
+			util.ExitWithErrorMessage("error creating istio deployment: %v", err)
+		}
 	}
 
 	// Apply controller CRDs
-	spinner.SetNewAction("Creating controller")
-	if err := InstallController(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS)); err != nil {
-		return fmt.Errorf("error creating cellery controller: %v", err)
+	if !useHelmChartStatus {
+		spinner.SetNewAction("Creating controller")
+		if err := InstallController(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS)); err != nil {
+			return fmt.Errorf("error creating cellery controller: %v", err)
+		}
+	} else {
+		chartName := "controller"
+		log.Print("Deploying controller chart")
+		values := util.GetHelmChartsValues(chartName, filepath.Join(util.CelleryInstallationDir(), constants.HELM_CHARTS))
+		knativeChart := filepath.Join(util.CelleryInstallationDir(), constants.HELM_CHARTS, chartName)
+		if err := ApplyControllerCrdsChart(knativeChart, values); err != nil {
+			util.ExitWithErrorMessage("error creating istio deployment: %v", err)
+		}
 	}
-
 	spinner.SetNewAction("Configuring mysql")
 	if err := AddMysql(artifactsPath, isPersistentVolume); err != nil {
 		return fmt.Errorf("error configuring mysql: %v", err)
