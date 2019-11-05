@@ -29,6 +29,8 @@ import (
 
 	"github.com/mattbaird/jsonpatch"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/cellery-io/sdk/components/cli/pkg/constants"
 	"github.com/cellery-io/sdk/components/cli/pkg/kubectl"
 	"github.com/cellery-io/sdk/components/cli/pkg/util"
@@ -162,23 +164,47 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 	}
 
 	// Apply controller CRDs
+	//if !useHelmChartStatus {
+	//	spinner.SetNewAction("Creating controller")
+	//	if err := InstallController(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS)); err != nil {
+	//		return fmt.Errorf("error creating cellery controller: %v", err)
+	//	}
+	//} else {
+	//	chartName := "controller"
+	//	log.Print("Deploying controller chart")
+	//	values := util.GetHelmChartsValues(chartName, filepath.Join(util.CelleryInstallationDir(), constants.HELM_CHARTS))
+	//	knativeChart := filepath.Join(util.CelleryInstallationDir(), constants.HELM_CHARTS, chartName)
+	//	if err := ApplyControllerCrdsChart(knativeChart, values); err != nil {
+	//		util.ExitWithErrorMessage("error creating istio deployment: %v", err)
+	//	}
+	//}
+	spinner.SetNewAction("Configuring mysql")
 	if !useHelmChartStatus {
-		spinner.SetNewAction("Creating controller")
-		if err := InstallController(filepath.Join(util.CelleryInstallationDir(), constants.K8S_ARTIFACTS)); err != nil {
-			return fmt.Errorf("error creating cellery controller: %v", err)
+		if err := AddMysql(artifactsPath, isPersistentVolume); err != nil {
+			return fmt.Errorf("error configuring mysql: %v", err)
 		}
 	} else {
-		chartName := "controller"
-		log.Print("Deploying controller chart")
-		values := util.GetHelmChartsValues(chartName, filepath.Join(util.CelleryInstallationDir(), constants.HELM_CHARTS))
-		knativeChart := filepath.Join(util.CelleryInstallationDir(), constants.HELM_CHARTS, chartName)
-		if err := ApplyControllerCrdsChart(knativeChart, values); err != nil {
+		chartName := "mysql"
+		log.Print("Deploying mysql chart")
+		values := util.GetHelmChartsValues(chartName, filepath.Join(constants.HELM_CHARTS))
+
+		mysqSrvlTmpl := MysqlServer{}
+
+		err := yaml.Unmarshal([]byte(values), &mysqSrvlTmpl)
+		if err != nil {
+			log.Fatalf("error: %v", err)
+		}
+
+		mysqSrvlTmpl.Mysql.Enabled = "true"
+		mysqSrvlTmpl.Mysql.Persistence.Enabled = "false"
+		mysqlSrvVals, err := yaml.Marshal(&mysqSrvlTmpl)
+		if err != nil {
+			log.Fatalf("error: %v", err)
+		}
+		mysqlChart := filepath.Join(util.CelleryInstallationDir(), constants.HELM_CHARTS, chartName)
+		if err := ApplyControllerCrdsChart(mysqlChart, string(mysqlSrvVals)); err != nil {
 			util.ExitWithErrorMessage("error creating istio deployment: %v", err)
 		}
-	}
-	spinner.SetNewAction("Configuring mysql")
-	if err := AddMysql(artifactsPath, isPersistentVolume); err != nil {
-		return fmt.Errorf("error configuring mysql: %v", err)
 	}
 
 	spinner.SetNewAction("Creating ConfigMaps")

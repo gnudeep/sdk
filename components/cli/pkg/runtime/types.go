@@ -31,21 +31,48 @@ const (
 	Mysql            SystemComponent = "Mysql"
 )
 
-type T struct {
-	A string
-	B struct {
-		RenamedC int   `yaml:"c"`
-		D        []int `yaml:",flow"`
-	}
+type CelleryRuntimeVals struct {
+	Global struct {
+		CelleryRuntime struct {
+			Db struct {
+				CarbonDb struct {
+					Username string `yaml:"username"`
+					Password string `yaml:"password"`
+				} `yaml:"carbon"`
+			} `yaml:"db"`
+
+			CarbonSystem struct {
+				AdminUser struct {
+					UserName     string `yaml:"username"`
+					UserPassword string `yaml:"password"`
+				} `yaml:"admin"`
+			} `yaml:"carbon"`
+		} `yaml:"celleryRuntime"`
+	} `yaml:"global"`
 }
 
-type CelleryRuntimeValues struct {
-	Db struct {
-		Carbon struct {
-			UserName string `yaml:"wso2carbon"`
-			UserPassword string `yaml:"wso2carbon"`
-		}
-	}
+type MysqlServer struct {
+	Mysql struct {
+		Enabled      string `yaml:"enabled"`
+		RootPassword string `yaml:"rootPassword"`
 
+		Persistence struct {
+			Enabled      string `yaml:"enabled"`
+			StorageClass string `yaml:"storageClass"`
+			AccessMode   string `yaml:"accessMode"`
+			Size         string `yaml:"size"`
+			SubPath      string `yaml:"subPath"`
+		} `yaml:"persistence"`
 
+		Nfs struct {
+			Enabled        string `yaml:"enabled"`
+			ServerIp       string `yaml:"serverIp"`
+			SharedLocation string `yaml:"sharedLocation"`
+		} `yaml:"nfs"`
+
+		LocalStorage struct {
+			Enabled     string `yaml:"enabled"`
+			StoragePath string `yaml:"storagePath"`
+		} `yaml:"localStorage"`
+	} `yaml:"mysql"`
 }
