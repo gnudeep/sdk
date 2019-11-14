@@ -57,23 +57,23 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 		createFoldersRequiredForMysqlPvc()
 		createFoldersRequiredForApimPvc()
 	}
-	dbHostName := constants.MYSQL_HOST_NAME_FOR_EXISTING_CLUSTER
-	dbUserName := constants.CELLERY_SQL_USER_NAME
-	dbPassword := constants.CELLERY_SQL_PASSWORD
-	if hasNfsStorage {
-		dbHostName = db.DbHostName
-		dbUserName = db.DbUserName
-		dbPassword = db.DbPassword
-		updateNfsServerDetails(nfs.NfsServerIp, nfs.FileShare, artifactsPath)
-	}
-	if err := updateMysqlCredentials(dbUserName, dbPassword, dbHostName, artifactsPath); err != nil {
-		spinner.Stop(false)
-		return fmt.Errorf("error updating mysql credentials: %v", err)
-	}
-	if err := updateInitSql(dbUserName, dbPassword, artifactsPath); err != nil {
-		spinner.Stop(false)
-		return fmt.Errorf("error updating mysql init script: %v", err)
-	}
+	//dbHostName := constants.MYSQL_HOST_NAME_FOR_EXISTING_CLUSTER
+	//dbUserName := constants.CELLERY_SQL_USER_NAME
+	//dbPassword := constants.CELLERY_SQL_PASSWORD
+	//if hasNfsStorage {
+	//	dbHostName = db.DbHostName
+	//	dbUserName = db.DbUserName
+	//	dbPassword = db.DbPassword
+	//	updateNfsServerDetails(nfs.NfsServerIp, nfs.FileShare, artifactsPath)
+	//}
+	//if err := updateMysqlCredentials(dbUserName, dbPassword, dbHostName, artifactsPath); err != nil {
+	//	spinner.Stop(false)
+	//	return fmt.Errorf("error updating mysql credentials: %v", err)
+	//}
+	//if err := updateInitSql(dbUserName, dbPassword, artifactsPath); err != nil {
+	//	spinner.Stop(false)
+	//	return fmt.Errorf("error updating mysql init script: %v", err)
+	//}
 
 	if isPersistentVolume && !IsGcpRuntime() {
 		nodeName, err := kubectl.GetMasterNodeName()
@@ -184,39 +184,50 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 			return fmt.Errorf("error configuring mysql: %v", err)
 		}
 	} else {
-		chartName := "mysql"
-		log.Print("Deploying mysql chart")
-		values := util.GetHelmChartsValues(chartName, filepath.Join(constants.HELM_CHARTS))
+		chartName := "cellery-runtime"
+		log.Print("Deploying cellery-runtime chart")
+		values := util.GetHelmChartsValues(chartName, filepath.Join(util.CelleryInstallationDir(), constants.HELM_CHARTS))
 
-		mysqSrvlTmpl := MysqlServer{}
+		celleryVals := CelleryRuntimeVals{}
 
-		err := yaml.Unmarshal([]byte(values), &mysqSrvlTmpl)
+		err := yaml.Unmarshal([]byte(values), &celleryVals)
 		if err != nil {
 			log.Fatalf("error: %v", err)
 		}
 
-		mysqSrvlTmpl.Mysql.Enabled = "true"
-		mysqSrvlTmpl.Mysql.Persistence.Enabled = "false"
-		mysqlSrvVals, err := yaml.Marshal(&mysqSrvlTmpl)
+		celleryVals.Mysql.Enabled = true
+		if isPersistentVolume {
+			// Mount volume related to mysql
+			celleryVals.Mysql.Persistence.Enabled = true
+		} else {
+			celleryVals.Mysql.Persistence.Enabled = false
+
+		}
+
+		if !isCompleteSetup {
+			celleryVals.Idp.Enabled = true
+		}
+
+		celleryValYaml, err := yaml.Marshal(&celleryVals)
 		if err != nil {
 			log.Fatalf("error: %v", err)
 		}
-		mysqlChart := filepath.Join(util.CelleryInstallationDir(), constants.HELM_CHARTS, chartName)
-		if err := ApplyControllerCrdsChart(mysqlChart, string(mysqlSrvVals)); err != nil {
-			util.ExitWithErrorMessage("error creating istio deployment: %v", err)
+		celleryChart := filepath.Join(util.CelleryInstallationDir(), constants.HELM_CHARTS, chartName)
+		if err := ApplyControllerCrdsChart(celleryChart, string(celleryValYaml)); err != nil {
+			util.ExitWithErrorMessage("error creating Cellery runtime deployment: %v", err)
 		}
 	}
 
-	spinner.SetNewAction("Creating ConfigMaps")
-	if err := CreateGlobalGatewayConfigMaps(artifactsPath); err != nil {
-		return fmt.Errorf("error creating gateway configmaps: %v", err)
-	}
-	if err := CreateObservabilityConfigMaps(artifactsPath); err != nil {
-		return fmt.Errorf("error creating observability configmaps: %v", err)
-	}
-	if err := CreateIdpConfigMaps(artifactsPath); err != nil {
-		return fmt.Errorf("error creating idp configmaps: %v", err)
-	}
+	//spinner.SetNewAction("Creating ConfigMaps")
+	//if err := CreateGlobalGatewayConfigMaps(artifactsPath); err != nil {
+	//	return fmt.Errorf("error creating gateway configmaps: %v", err)
+	//}
+	//if err := CreateObservabilityConfigMaps(artifactsPath); err != nil {
+	//	return fmt.Errorf("error creating observability configmaps: %v", err)
+	//}
+	//if err := CreateIdpConfigMaps(artifactsPath); err != nil {
+	//	return fmt.Errorf("error creating idp configmaps: %v", err)
+	//}
 
 	if isPersistentVolume {
 		spinner.SetNewAction("Creating Persistent Volume")
@@ -235,10 +246,10 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 			return fmt.Errorf("error creating observability deployment: %v", err)
 		}
 	} else {
-		spinner.SetNewAction("Adding idp")
-		if err := addIdp(artifactsPath); err != nil {
-			return fmt.Errorf("error creating idp deployment: %v", err)
-		}
+		//spinner.SetNewAction("Adding idp")
+		//if err := addIdp(artifactsPath); err != nil {
+		//	return fmt.Errorf("error creating idp deployment: %v", err)
+		//}
 	}
 	if !isLoadBalancerIngressMode {
 		if nodePortIpAddress != "" {

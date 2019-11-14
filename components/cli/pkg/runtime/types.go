@@ -49,15 +49,13 @@ type CelleryRuntimeVals struct {
 			} `yaml:"carbon"`
 		} `yaml:"celleryRuntime"`
 	} `yaml:"global"`
-}
 
-type MysqlServer struct {
 	Mysql struct {
-		Enabled      string `yaml:"enabled"`
+		Enabled      bool `yaml:"enabled"`
 		RootPassword string `yaml:"rootPassword"`
 
 		Persistence struct {
-			Enabled      string `yaml:"enabled"`
+			Enabled      bool `yaml:"enabled"`
 			StorageClass string `yaml:"storageClass"`
 			AccessMode   string `yaml:"accessMode"`
 			Size         string `yaml:"size"`
@@ -65,14 +63,50 @@ type MysqlServer struct {
 		} `yaml:"persistence"`
 
 		Nfs struct {
-			Enabled        string `yaml:"enabled"`
+			Enabled        bool `yaml:"enabled"`
 			ServerIp       string `yaml:"serverIp"`
 			SharedLocation string `yaml:"sharedLocation"`
 		} `yaml:"nfs"`
 
 		LocalStorage struct {
-			Enabled     string `yaml:"enabled"`
+			Enabled     bool `yaml:"enabled"`
 			StoragePath string `yaml:"storagePath"`
 		} `yaml:"localStorage"`
 	} `yaml:"mysql"`
+
+	Controller struct {
+		Enabled      bool `yaml:"enabled"`
+	} `yaml:"controller"`
+
+	ApiManager struct {
+		Enabled      bool `yaml:"enabled"`
+	} `yaml:"apim"`
+
+	Idp struct {
+		Enabled      bool `yaml:"enabled"`
+	} `yaml:"idp"`
+
+	Observability struct {
+		Enabled      bool `yaml:"enabled"`
+	} `yaml:"observability-portal"`
+
+	SpWorker struct {
+		Enabled bool `yaml:"enabled"`
+	} `yaml:"sp-worker"`
+
+	Grafana struct {
+		Enabled      bool `yaml:"enabled"`
+	} `yaml:"grafana"`
+
+	Prometheus struct {
+		Enabled bool `yaml:"enabled"`
+	} `yaml:"prometheus"`
+
+	MixerAdapter struct {
+		Enabled bool `yaml:"enabled"`
+	} `yaml:"mixer-adapter"`
 }
+
+
+
+
