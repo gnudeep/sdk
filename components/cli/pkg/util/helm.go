@@ -35,6 +35,19 @@ import (
 	"k8s.io/helm/pkg/renderutil"
 )
 
+func ApplyHelmChart(operation string, chartName string, namespace string, chartPath string, values string) error {
+		//Name of the chart is selected as the helm chart release name.
+	chartTemplate := RenderHelmChart(chartName, namespace, chartPath, values)
+	//ApplyNamespacedHelmTemplates(chartTemplate, namespace)
+	ApplyK8sResource(operation, chartTemplate, namespace)
+	//err := kubectl.ApplyFile(chartTemplate)
+	//if err != nil {
+	//	return err
+	//}
+	return nil
+}
+
+
 func RenderHelmChart(releaseName string, chartNamespace string, chartPath string, chartValues string) string {
 	if chartNamespace == "" {
 		chartNamespace = "default"
@@ -89,11 +102,56 @@ func ApplyHelmTemplates(tmplString string) {
 	}()
 
 	out, err := cmd.CombinedOutput()
+	//Temporary logfile to write kubectl outputs
 	WriteErrorLog(string(out))
 	//fmt.Println("Commnd output :", string(out))
 
 	if err != nil {
 		log.Fatal("Command execution", err)
+	}
+}
+
+func ApplyNamespacedHelmTemplates(tmplString string, namespace string) {
+	cmd := exec.Command("kubectl", "apply", "-f", "-", "-n", namespace)
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		log.Fatal("kubectl command build", err)
+	}
+
+	go func() {
+		defer stdin.Close()
+		io.WriteString(stdin, tmplString)
+	}()
+
+	out, err := cmd.CombinedOutput()
+	//Temporary logfile to write kubectl outputs
+	WriteErrorLog(string(out))
+	//fmt.Println("Commnd output :", string(out))
+
+	if err != nil {
+		log.Fatal("Command execution", err)
+	}
+}
+
+func ApplyK8sResource(operation string, tmplString string, namespace string) {
+	cmd := exec.Command("kubectl", operation, "-f", "-", "-n", namespace)
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		log.Fatal("kubectl command build", err)
+	}
+
+	go func() {
+		defer stdin.Close()
+		io.WriteString(stdin, tmplString)
+	}()
+
+	out, err := cmd.CombinedOutput()
+	//Temporary logfile to write kubectl outputs
+	WriteErrorLog(string(out))
+	//fmt.Println("Commnd output :", string(out))
+
+	if err != nil {
+		log.Print("kubectl command execution", err)
 	}
 }
 

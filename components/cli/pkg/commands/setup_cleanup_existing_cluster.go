@@ -20,6 +20,8 @@ package commands
 
 import (
 	"fmt"
+	"log"
+	"path/filepath"
 
 	"github.com/manifoldco/promptui"
 
@@ -88,7 +90,8 @@ func cleanupExistingCluster() error {
 			}
 		}
 		spinner := util.StartNewSpinner("Cleaning up cluster")
-		cleanupCluster(removeKnative, removeIstio, removeIngress, removeHpa)
+		//cleanupCluster(removeKnative, removeIstio, removeIngress, removeHpa)
+		cleanupClusterViaHelm(removeKnative, removeIstio, removeIngress, removeHpa)
 		spinner.Stop(true)
 	}
 	return nil
@@ -109,7 +112,8 @@ func RunCleanupExisting(removeKnative, removeIstio, removeIngress, removeHpa, co
 		if removeKnative {
 			kubectl.DeleteNameSpace("knative-serving")
 		}
-		cleanupCluster(removeKnative, removeIstio, removeIngress, removeHpa)
+		//cleanupCluster(removeKnative, removeIstio, removeIngress, removeHpa)
+		cleanupClusterViaHelm(removeKnative, removeIstio, removeIngress, removeHpa)
 		spinner.Stop(true)
 	}
 	return nil
@@ -136,4 +140,77 @@ func cleanupCluster(removeKnative, removeIstio, removeIngress, removeHpa bool) {
 	kubectl.DeleteAllCells()
 	kubectl.DeletePersistedVolume("wso2apim-local-pv")
 	kubectl.DeletePersistedVolume("wso2apim-with-analytics-mysql-pv")
+}
+
+func cleanupClusterViaHelm(removeKnative, removeIstio, removeIngress, removeHpa bool){
+	//Delete all cells
+	kubectl.DeleteAllCells()
+	//Remove cellery-system artifacts
+	chartName := "cellery-runtime"
+	log.Print("DEBUG: cellery-system deletion started")
+	//values := util.GetHelmChartsValues(chartName, filepath.Join(util.CelleryInstallationDir(), constants.HELM_CHARTS))
+	values := util.GetHelmChartsCustomValues(chartName, filepath.Join(util.CelleryInstallationDir(), constants.HELM_CHARTS), "all-on-values.yaml")
+	log.Print("DEBUG: cellery-system values:" + values)
+	chartPath := filepath.Join(util.CelleryInstallationDir(), constants.HELM_CHARTS, chartName)
+	log.Print(chartPath)
+	//Need to remove cellery-system namespace yaml from the controller
+	util.ApplyHelmChart("delete", "cellery-runtime", "cellery-system", chartPath, values)
+	//kubectl.DeleteNameSpace("cellery-system")
+
+	if removeKnative {
+		chartName := "knative-crd"
+		log.Print("DEBUG: knative-crd deletion started")
+		values := util.GetHelmChartsValues(chartName, filepath.Join(util.CelleryInstallationDir(), constants.HELM_CHARTS))
+		log.Print("DEBUG: knative values:" + values)
+		chartPath := filepath.Join(util.CelleryInstallationDir(), constants.HELM_CHARTS, chartName)
+		log.Print(chartPath)
+		util.ApplyHelmChart("delete", "knative-crd", "default", chartPath, values)
+		//out, err := kubectl.DeleteResource("apiservices.apiregistration.k8s.io", "v1beta1.custom.metrics.k8s.io")
+		//if err != nil {
+		//	util.ExitWithErrorMessage("Error occurred while deleting the knative apiservice", fmt.Errorf(out))
+		//}
+		kubectl.DeleteNameSpace("knative-serving")
+	}
+	if removeIstio {
+
+		chartName := "istio-init"
+		log.Print("DEBUG: istio-init deletion started")
+		values := util.GetHelmChartsValues(chartName, filepath.Join(util.CelleryInstallationDir(), constants.HELM_CHARTS))
+		log.Print("DEBUG: knative values:" + values)
+		chartPath := filepath.Join(util.CelleryInstallationDir(), constants.HELM_CHARTS, chartName)
+		log.Print(chartPath)
+		util.ApplyHelmChart("delete", "istio-init", "istio-system", chartPath, values)
+
+		////
+		// Need to delete istio first then istio-init then remove crds
+		//kubectl delete -f install/kubernetes/helm/istio-init/files
+		// https://istio.io/docs/setup/install/helm/
+		chartName = "istio"
+		log.Print("DEBUG: istio-init deletion started")
+		values = util.GetHelmChartsValues(chartName, filepath.Join(util.CelleryInstallationDir(), constants.HELM_CHARTS))
+		log.Print("DEBUG: knative values:" + values)
+		chartPath = filepath.Join(util.CelleryInstallationDir(), constants.HELM_CHARTS, chartName)
+		log.Print(chartPath)
+		util.ApplyHelmChart("delete", "istio-init", "istio-system", chartPath, values)
+
+		kubectl.DeleteNameSpace("istio-system")
+	}
+	log.Print("remove Ingress: %v" ,removeIngress)
+	if removeIngress {
+		chartName = "ingress-controller"
+		log.Print("DEBUG: ingress-controller deletion started")
+		values = util.GetHelmChartsValues(chartName, filepath.Join(util.CelleryInstallationDir(), constants.HELM_CHARTS))
+		log.Print("DEBUG: ingress-controller values:" + values)
+		chartPath = filepath.Join(util.CelleryInstallationDir(), constants.HELM_CHARTS, chartName)
+		log.Print(chartPath)
+		util.ApplyHelmChart("delete", "ingress-controller", "ingress-controller", chartPath, values)
+		kubectl.DeleteNameSpace("ingress-controller")
+	}
+	if removeHpa {
+		runtime.DeleteComponent(runtime.HPA)
+	}
+	//kubectl.DeleteAllCells()
+	kubectl.DeletePersistedVolume("wso2apim-local-pv")
+	kubectl.DeletePersistedVolume("wso2apim-with-analytics-mysql-pv")
+
 }

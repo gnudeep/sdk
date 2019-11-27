@@ -118,7 +118,8 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 		log.Print("Deploying ingress-nginx chart")
 		values := util.GetHelmChartsValues(chartName, filepath.Join(util.CelleryInstallationDir(), constants.HELM_CHARTS))
 		ingressInitChart := filepath.Join(util.CelleryInstallationDir(), constants.HELM_CHARTS, chartName)
-		if err := ApplyIngresControllerChart(ingressInitChart, values); err != nil {
+		//if err := ApplyIngresControllerChart(ingressInitChart, values); err != nil {
+		if err := util.ApplyHelmChart("apply", chartName, chartName, ingressInitChart, values); err != nil {
 			util.ExitWithErrorMessage("error creating ingress-controller: %v", err)
 		}
 	}
@@ -154,7 +155,7 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 			return fmt.Errorf("error installing knative serving: %v", err)
 		}
 	} else {
-		chartName := "knative"
+		chartName := "knative-crd"
 		log.Print("Deploying knative chart")
 		values := util.GetHelmChartsValues(chartName, filepath.Join(util.CelleryInstallationDir(), constants.HELM_CHARTS))
 		knativeChart := filepath.Join(util.CelleryInstallationDir(), constants.HELM_CHARTS, chartName)
@@ -206,6 +207,9 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 
 		if !isCompleteSetup {
 			celleryVals.Idp.Enabled = true
+		} else {
+			celleryVals.ApiManager.Enabled = true
+			celleryVals.Observability.Enabled = true
 		}
 
 		celleryValYaml, err := yaml.Marshal(&celleryVals)
@@ -237,14 +241,14 @@ func CreateRuntime(artifactsPath string, isPersistentVolume, hasNfsStorage, isLo
 	}
 
 	if isCompleteSetup {
-		spinner.SetNewAction("Adding apim")
-		if err := addApim(artifactsPath, isPersistentVolume); err != nil {
-			return fmt.Errorf("error creating apim deployment: %v", err)
-		}
-		spinner.SetNewAction("Adding observability")
-		if err := addObservability(artifactsPath); err != nil {
-			return fmt.Errorf("error creating observability deployment: %v", err)
-		}
+		//spinner.SetNewAction("Adding apim")
+		//if err := addApim(artifactsPath, isPersistentVolume); err != nil {
+		//	return fmt.Errorf("error creating apim deployment: %v", err)
+		//}
+		//spinner.SetNewAction("Adding observability")
+		//if err := addObservability(artifactsPath); err != nil {
+		//	return fmt.Errorf("error creating observability deployment: %v", err)
+		//}
 	} else {
 		//spinner.SetNewAction("Adding idp")
 		//if err := addIdp(artifactsPath); err != nil {
