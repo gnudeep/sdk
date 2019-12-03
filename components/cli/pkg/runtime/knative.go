@@ -20,6 +20,8 @@ package runtime
 
 import (
 	"fmt"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"log"
 	"path/filepath"
 	"strings"
 	"time"
@@ -51,13 +53,13 @@ func ApplyKnativeCrds(artifactsPath string) error {
 	return nil
 }
 
-func deleteKnative() error {
-	out, err := kubernetes.DeleteResource("apiservices.apiregistration.k8s.io", "v1beta1.custom.metrics.k8s.io")
-	if err != nil {
-		return fmt.Errorf("error occurred while deleting the knative apiservice: %s", fmt.Errorf(out))
-	}
-	return kubernetes.DeleteNameSpace("knative-serving")
-}
+//func deleteKnative() error {
+//	out, err := kubernetes.DeleteResource("apiservices.apiregistration.k8s.io", "v1beta1.custom.metrics.k8s.io")
+//	if err != nil {
+//		return fmt.Errorf("error occurred while deleting the knative apiservice: %s", fmt.Errorf(out))
+//	}
+//	return kubernetes.DeleteNameSpace("knative-serving")
+//}
 
 func IsKnativeEnabled() (bool, error) {
 	enabled := true
@@ -85,4 +87,12 @@ func buildKnativeCrdsYamlPaths(artifactsPath string) []string {
 	return []string{
 		filepath.Join(base, "knative-serving-crds.yaml"),
 	}
+}
+
+func deleteKnative() error {
+	log.Printf("Deploying knative system using knative-crd chart")
+	if err := util.ApplyHelmChartWithCustomValues("knative-crd", "default", "delete", ""); err != nil {
+		return fmt.Errorf("error installing knative crds: %v", err)
+	}
+	return nil
 }

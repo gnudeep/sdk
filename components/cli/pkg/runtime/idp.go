@@ -19,9 +19,12 @@
 package runtime
 
 import (
-	"path/filepath"
-
 	"cellery.io/cellery/components/cli/pkg/kubernetes"
+	"cellery.io/cellery/components/cli/pkg/util"
+	"fmt"
+	"gopkg.in/yaml.v2"
+	"log"
+	"path/filepath"
 )
 
 func addIdp(artifactsPath string) error {
@@ -34,15 +37,15 @@ func addIdp(artifactsPath string) error {
 	return nil
 }
 
-func deleteIdp(artifactsPath string) error {
-	for _, v := range buildIdpYamlPaths(artifactsPath) {
-		err := kubernetes.DeleteFileWithNamespace(v, "cellery-system")
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
+//func deleteIdp(artifactsPath string) error {
+//	for _, v := range buildIdpYamlPaths(artifactsPath) {
+//		err := kubernetes.DeleteFileWithNamespace(v, "cellery-system")
+//		if err != nil {
+//			return err
+//		}
+//	}
+//	return nil
+//}
 
 func CreateIdpConfigMaps(artifactsPath string) error {
 	for _, confMap := range buildIdpConfigMaps(artifactsPath) {
@@ -69,4 +72,25 @@ func buildIdpConfigMaps(artifactsPath string) []ConfigMap {
 		{"identity-server-conf-identity", filepath.Join(base, "conf", "identity")},
 		{"identity-server-tomcat", filepath.Join(base, "conf", "tomcat")},
 	}
+}
+
+func deleteIdp() error {
+	celleryValues := CelleryRuntimeVals{}
+	chartName := "cellery-runtime"
+	celleryVals, errCelVals := util.GetHelmChartDefaultValues(chartName)
+	if errCelVals != nil {
+		err := yaml.Unmarshal([]byte(celleryVals), &celleryValues)
+		if err != nil {
+			log.Printf("error: %v", err)
+		}
+	}
+	celleryValues.Idp.Enabled = true
+	celleryYamls, errcon := yaml.Marshal(&celleryValues)
+	if errcon != nil {
+		log.Printf("error: %v", errcon)
+	}
+	if err := util.ApplyHelmChartWithCustomValues("cellery-runtime", "cellery-runtime", "delete", string(celleryYamls)); err != nil {
+		return fmt.Errorf("error installing ingress controller: %v", err)
+	}
+	return nil
 }

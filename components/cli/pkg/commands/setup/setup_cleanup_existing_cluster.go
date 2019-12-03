@@ -20,6 +20,9 @@ package setup
 
 import (
 	"fmt"
+	"github.com/cellery-io/sdk/components/cli/pkg/constants"
+	"log"
+	"path/filepath"
 
 	"github.com/manifoldco/promptui"
 
@@ -134,6 +137,52 @@ func cleanupCluster(removeKnative, removeIstio, removeIngress, removeHpa bool) {
 		runtime.DeleteComponent(runtime.HPA)
 	}
 	kubernetes.DeleteAllCells()
+	kubernetes.DeletePersistedVolume("wso2apim-local-pv")
+	kubernetes.DeletePersistedVolume("wso2apim-with-analytics-mysql-pv")
+}
+
+func cleanupClusterViaHelm(removeKnative, removeIstio, removeIngress, removeHpa bool) {
+	//Delete all cells
+	kubernetes.DeleteAllCells()
+	//Remove cellery-system artifacts
+	chartName := "cellery-runtime"
+	log.Print("DEBUG: cellery-system deletion started")
+	values, _ := util.GetHelmChartsCustomValues(chartName, filepath.Join(util.CelleryInstallationDir(), constants.HelmCarts), "all-on-values.yaml")
+	//Need to remove cellery-system namespace yaml from the controller
+	if err := util.ApplyHelmChartWithCustomValues("cellery-runtime",  "cellery-runtime", "delete", values); err != nil {
+		log.Printf("error removing cellery-system artifacts: %v", err)
+	} else {
+		kubernetes.DeleteNameSpace("cellery-system")
+	}
+
+	if removeKnative {
+		log.Print("knative-crd deletion started")
+		if err := util.ApplyHelmChartWithDefaultValuesCustomCmd("knative-crd", "default", "delete"); err != nil {
+			log.Printf("error removing knative artifacts: %v", err)
+		}
+	}
+	if removeIstio {
+		log.Print("istio deletion started")
+		if err := util.ApplyHelmChartWithDefaultValuesCustomCmd("istio", "istio-system", "delete"); err != nil {
+			log.Printf("error removing istio artifacts: %v", err)
+		}
+		//kubectl delete -f install/kubernetes/helm/istio-init/files
+		// https://istio.io/docs/setup/install/helm/
+		if err := util.ApplyHelmChartWithDefaultValuesCustomCmd("istio-init", "istio-system", "delete"); err != nil {
+			log.Printf("error removing istio artifacts: %v", err)
+		}
+		kubernetes.DeleteNameSpace("istio-system")
+	}
+	if removeIngress {
+		log.Print("ingress-controller deletion started")
+		if err := util.ApplyHelmChartWithDefaultValuesCustomCmd("ingress-controller", "ingress-controller", "delete"); err != nil {
+			log.Printf("error removing ingress-controller artifacts: %v", err)
+		}
+		kubernetes.DeleteNameSpace("ingress-controller")
+	}
+	if removeHpa {
+		runtime.DeleteComponent(runtime.HPA)
+	}
 	kubernetes.DeletePersistedVolume("wso2apim-local-pv")
 	kubernetes.DeletePersistedVolume("wso2apim-with-analytics-mysql-pv")
 }

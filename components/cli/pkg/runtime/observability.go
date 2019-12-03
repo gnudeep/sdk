@@ -19,11 +19,13 @@
 package runtime
 
 import (
+	"cellery.io/cellery/components/cli/pkg/kubernetes"
+	"cellery.io/cellery/components/cli/pkg/util"
 	"fmt"
+	"gopkg.in/yaml.v2"
+	"log"
 	"path/filepath"
 	"strings"
-
-	"cellery.io/cellery/components/cli/pkg/kubernetes"
 )
 
 func addObservability(artifactsPath string) error {
@@ -36,15 +38,15 @@ func addObservability(artifactsPath string) error {
 	return nil
 }
 
-func deleteObservability(artifactsPath string) error {
-	for _, v := range buildObservabilityYamlPaths(artifactsPath) {
-		err := kubernetes.DeleteFile(v)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
+//func deleteObservability(artifactsPath string) error {
+//	for _, v := range buildObservabilityYamlPaths(artifactsPath) {
+//		err := kubernetes.DeleteFile(v)
+//		if err != nil {
+//			return err
+//		}
+//	}
+//	return nil
+//}
 func IsObservabilityEnabled() (bool, error) {
 	enabled := true
 	_, err := kubernetes.GetDeployment("cellery-system", "wso2sp-worker")
@@ -76,8 +78,7 @@ func buildObservabilityYamlPaths(artifactsPath string) []string {
 		filepath.Join(base, "portal", "observability-portal.yaml"),
 		filepath.Join(base, "prometheus", "k8s-metrics-prometheus.yaml"),
 		filepath.Join(base, "grafana", "k8s-metrics-grafana.yaml"),
-		filepath.Join(base, "observability-agent", "telemetry-agent.yaml"),
-		filepath.Join(base, "observability-agent", "tracing-agent.yaml"),
+		filepath.Join(base, "mixer-adapter", "mixer-adapter.yaml"),
 	}
 }
 
@@ -93,4 +94,25 @@ func buildObservabilityConfigMaps(artifactsPath string) []ConfigMap {
 		{"k8s-metrics-grafana-dashboards", filepath.Join(base, "grafana", "dashboards")},
 		{"k8s-metrics-grafana-dashboards-default", filepath.Join(base, "grafana", "dashboards", "default")},
 	}
+}
+
+func deleteObservability() error {
+	celleryValues := CelleryRuntimeVals{}
+	chartName := "cellery-runtime"
+	celleryVals, errCelVals := util.GetHelmChartDefaultValues(chartName)
+	if errCelVals != nil {
+		err := yaml.Unmarshal([]byte(celleryVals), &celleryValues)
+		if err != nil {
+			log.Printf("error: %v", err)
+		}
+	}
+	celleryValues.Idp.Enabled = true
+	celleryYamls, errcon := yaml.Marshal(&celleryValues)
+	if errcon != nil {
+		log.Printf("error: %v", errcon)
+	}
+	if err := util.ApplyHelmChartWithCustomValues("cellery-runtime", "cellery-runtime", "delete", string(celleryYamls)); err != nil {
+		return fmt.Errorf("error installing ingress controller: %v", err)
+	}
+	return nil
 }

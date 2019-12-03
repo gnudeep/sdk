@@ -30,3 +30,94 @@ const (
 	System           SystemComponent = "System"
 	Mysql            SystemComponent = "Mysql"
 )
+
+type CelleryRuntimeVals struct {
+	Global struct {
+		CelleryRuntime struct {
+			Db struct {
+				CarbonDb struct {
+					Username string `yaml:"username"`
+					Password string `yaml:"password"`
+				} `yaml:"carbon"`
+			} `yaml:"db"`
+
+			CarbonSystem struct {
+				AdminUser struct {
+					UserName     string `yaml:"username"`
+					UserPassword string `yaml:"password"`
+				} `yaml:"admin"`
+			} `yaml:"carbon"`
+		} `yaml:"celleryRuntime"`
+	} `yaml:"global"`
+
+	Mysql struct {
+		Enabled      bool `yaml:"enabled"`
+		RootPassword string `yaml:"rootPassword"`
+
+		Persistence struct {
+			Enabled      bool `yaml:"enabled"`
+			StorageClass string `yaml:"storageClass"`
+			AccessMode   string `yaml:"accessMode"`
+			Size         string `yaml:"size"`
+			SubPath      string `yaml:"subPath"`
+		} `yaml:"persistence"`
+
+		Nfs struct {
+			Enabled        bool `yaml:"enabled"`
+			ServerIp       string `yaml:"serverIp"`
+			SharedLocation string `yaml:"sharedLocation"`
+		} `yaml:"nfs"`
+
+		LocalStorage struct {
+			Enabled     bool `yaml:"enabled"`
+			StoragePath string `yaml:"storagePath"`
+		} `yaml:"localStorage"`
+	} `yaml:"mysql"`
+
+	Controller struct {
+		Enabled      bool `yaml:"enabled"`
+	} `yaml:"controller"`
+
+	ApiManager struct {
+		Enabled      bool `yaml:"enabled"`
+	} `yaml:"apim"`
+
+	Idp struct {
+		Enabled      bool `yaml:"enabled"`
+	} `yaml:"idp"`
+
+	Observability struct {
+		Enabled      bool `yaml:"enabled"`
+	} `yaml:"observability-portal"`
+
+	SpWorker struct {
+		Enabled bool `yaml:"enabled"`
+	} `yaml:"sp-worker"`
+
+	Grafana struct {
+		Enabled      bool `yaml:"enabled"`
+	} `yaml:"grafana"`
+
+	Prometheus struct {
+		Enabled bool `yaml:"enabled"`
+	} `yaml:"prometheus"`
+
+	MixerAdapter struct {
+		Enabled bool `yaml:"enabled"`
+	} `yaml:"mixer-adapter"`
+}
+
+type IngressController struct {
+	NginxIngress struct {
+		Enabled    bool `yaml:"enabled"`
+		Controller struct {
+			ImageName struct {
+				Tag string `yaml:"tag"`
+			} `yaml:"image"`
+			Service struct {
+				Type string `yaml:"type"`
+			} `yaml:"service"`
+			ExternalIPs []string `yaml:"externalIPs"`
+		} `yaml:"controller"`
+	} `yaml:"nginx-ingress"`
+}

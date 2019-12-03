@@ -21,6 +21,8 @@ package runtime
 import (
 	"encoding/json"
 	"fmt"
+	"gopkg.in/yaml.v2"
+	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -260,6 +262,98 @@ func (runtime *CelleryRuntime) Create() error {
 	return nil
 }
 
+func CreateRuntimeHelm(runtime *CelleryRuntime) error {
+	spinner := util.StartNewSpinner("Creating cellery runtime")
+    //Install istio crds and components.
+	log.Printf("Deploying istio CRDs using istion-init chart")
+	if err := util.ApplyHelmChartWithDefaultValues("istio-init", "istio-system"); err != nil {
+		return fmt.Errorf("error installing istio crds: %v", err)
+	}
+	log.Printf("Deploying istio system using istio chart")
+	if err := util.ApplyHelmChartWithDefaultValues("istio", "istio-system"); err != nil {
+		return fmt.Errorf("error installing istio : %v", err)
+	}
+	log.Printf("Deploying knative system using knative-crd chart")
+	if err := util.ApplyHelmChartWithDefaultValues("knative-crd", "default"); err != nil {
+		return fmt.Errorf("error installing knative crds: %v", err)
+	}
+
+	if !runtime.isLoadBalancerIngressMode {
+		if runtime.nodePortIpAddress != "" {
+			log.Printf("Deploying ingress controller system using ingress-controller chart")
+			spinner.SetNewAction("Adding node port IP address")
+			ingressControllerVals := IngressController{}
+			ingVals, errVal := util.GetHelmChartDefaultValues("ingress-controller")
+			if errVal != nil {
+				errYaml := yaml.Unmarshal([]byte(ingVals), &ingressControllerVals)
+				if errYaml != nil {
+					log.Fatalf("error: %v", errYaml)
+				}
+			}
+			ingressControllerVals.NginxIngress.Controller.Service.Type = "NodePort"
+			ingressControllerVals.NginxIngress.Controller.ExternalIPs = []string{runtime.nodePortIpAddress}
+			controllerYamls, errcon := yaml.Marshal(&ingressControllerVals)
+			if errcon != nil {
+				log.Fatalf("error: %v", errcon)
+			}
+			if err := util.ApplyHelmChartWithCustomValues("ingress-controller", "ingress-nginx", "apply", string(controllerYamls)); err != nil {
+				return fmt.Errorf("error installing ingress controller: %v", err)
+			}
+		}
+	}
+	log.Printf("Deploying ingress cellery runtime using cellery-runtime chart")
+	if runtime.isPersistentVolume && !runtime.hasNfsStorage {
+		createFoldersRequiredForMysqlPvc()
+		createFoldersRequiredForApimPvc()
+	}
+	celleryValues := CelleryRuntimeVals{}
+	chartName := "cellery-runtime"
+	celleryVals, errCelVals := util.GetHelmChartDefaultValues(chartName)
+	if errCelVals != nil {
+		err := yaml.Unmarshal([]byte(celleryVals), &celleryValues)
+		if err != nil {
+			log.Fatalf("error: %v", err)
+		}
+	}
+	if runtime.hasNfsStorage {
+		updateNfsServerDetails(runtime.nfs.NfsServerIp, runtime.nfs.FileShare, runtime.artifactsPath)
+		celleryValues.Mysql.Nfs.Enabled = true
+		celleryValues.Mysql.Nfs.ServerIp = runtime.nfs.NfsServerIp
+		celleryValues.Mysql.Nfs.SharedLocation = runtime.nfs.FileShare
+	}
+	celleryValues.Mysql.Enabled = true
+	if runtime.isPersistentVolume {
+		celleryValues.Mysql.Persistence.Enabled = true
+	} else {
+		celleryValues.Mysql.Persistence.Enabled = false
+	}
+	// Lable the node to support local persistence-volume
+	if runtime.isPersistentVolume && !IsGcpRuntime() {
+		nodeName, err := kubernetes.GetMasterNodeName()
+		if err != nil {
+			return fmt.Errorf("error getting master node name: %v", err)
+		}
+		if err := kubernetes.ApplyLable("nodes", nodeName, "disk=local", true); err != nil {
+			return fmt.Errorf("error applying master node lable: %v", err)
+		}
+	}
+	if !isCompleteSetup {
+		celleryValues.Idp.Enabled = true
+	} else {
+		celleryValues.ApiManager.Enabled = true
+		celleryValues.Observability.Enabled = true
+	}
+	celleryYamls, errcon := yaml.Marshal(&celleryValues)
+	if errcon != nil {
+		log.Fatalf("error: %v", errcon)
+	}
+	if err := util.ApplyHelmChartWithCustomValues("cellery-runtime", "cellery-runtime", "apply", string(celleryYamls)); err != nil {
+		return fmt.Errorf("error installing ingress controller: %v", err)
+	}
+	spinner.Stop(true)
+	return nil
+}
+
 func UpdateRuntime(apiManagement, observability, knative, hpa Selection) error {
 	spinner := util.StartNewSpinner("Updating cellery runtime")
 	var err error
@@ -375,18 +469,35 @@ func AddComponent(component SystemComponent) error {
 	}
 }
 
+//func DeleteComponent(component SystemComponent) error {
+//	switch component {
+//	case ApiManager:
+//		return deleteApim(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts))
+//	case IdentityProvider:
+//		return deleteIdp(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts))
+//	case Observability:
+//		return deleteObservability(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts))
+//	case ScaleToZero:
+//		return deleteKnative()
+//	case HPA:
+//		return deleteHpa(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts))
+//	default:
+//		return fmt.Errorf("unknown system componenet %q", component)
+//	}
+//}
+
 func DeleteComponent(component SystemComponent) error {
 	switch component {
 	case ApiManager:
-		return deleteApim(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts))
+		return deleteApim()
 	case IdentityProvider:
-		return deleteIdp(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts))
+		return deleteIdp()
 	case Observability:
-		return deleteObservability(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts))
+		return deleteObservability()
 	case ScaleToZero:
 		return deleteKnative()
 	case HPA:
-		return deleteHpa(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts))
+		return deleteHpa()
 	default:
 		return fmt.Errorf("unknown system componenet %q", component)
 	}

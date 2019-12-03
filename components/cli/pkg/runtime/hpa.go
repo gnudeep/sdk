@@ -21,6 +21,8 @@ package runtime
 
 import (
 	"fmt"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"log"
 	"strings"
 
 	"cellery.io/cellery/components/cli/pkg/kubernetes"
@@ -36,15 +38,15 @@ func InstallHPA(artifactsPath string) error {
 	return nil
 }
 
-func deleteHpa(artifactsPath string) error {
-	for _, v := range buildHPAYamlPaths(artifactsPath) {
-		err := kubernetes.DeleteFile(v)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
+//func deleteHpa(artifactsPath string) error {
+//	for _, v := range buildHPAYamlPaths(artifactsPath) {
+//		err := kubernetes.DeleteFile(v)
+//		if err != nil {
+//			return err
+//		}
+//	}
+//	return nil
+//}
 
 func IsHpaEnabled() (bool, error) {
 	var err error
@@ -70,4 +72,12 @@ func buildHPAYamlPaths(artifactsPath string) []string {
 	return []string{
 		base,
 	}
+}
+
+func deleteHpa() error {
+	log.Printf("Deploying knative system using knative-crd chart")
+	if err := util.ApplyHelmChartWithCustomValues("knative-crd", "default", "delete", ""); err != nil {
+		return fmt.Errorf("error installing knative crds: %v", err)
+	}
+	return nil
 }
