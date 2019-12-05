@@ -19,7 +19,6 @@
 package runtime
 
 import (
-	"encoding/json"
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"log"
@@ -28,8 +27,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/mattbaird/jsonpatch"
 
 	"cellery.io/cellery/components/cli/pkg/constants"
 	"cellery.io/cellery/components/cli/pkg/kubernetes"
@@ -109,163 +106,163 @@ func (runtime *CelleryRuntime) SetNfs(nfs Nfs) {
 	runtime.nfs = nfs
 }
 
+//func (runtime *CelleryRuntime) Create() error {
+//	spinner := util.StartNewSpinner("Creating cellery runtime")
+//	if runtime.isPersistentVolume && !runtime.hasNfsStorage {
+//		createFoldersRequiredForMysqlPvc()
+//		createFoldersRequiredForApimPvc()
+//	}
+//	dbHostName := constants.MysqlHostNameForExistingCluster
+//	dbUserName := constants.CellerySqlUserName
+//	dbPassword := constants.CellerySqlPassword
+//	if runtime.hasNfsStorage {
+//		dbHostName = runtime.db.DbHostName
+//		dbUserName = runtime.db.DbUserName
+//		dbPassword = runtime.db.DbPassword
+//		updateNfsServerDetails(runtime.nfs.NfsServerIp, runtime.nfs.FileShare, runtime.artifactsPath)
+//	}
+//	if err := updateMysqlCredentials(dbUserName, dbPassword, dbHostName, runtime.artifactsPath); err != nil {
+//		spinner.Stop(false)
+//		return fmt.Errorf("error updating mysql credentials: %v", err)
+//	}
+//	if err := updateInitSql(dbUserName, dbPassword, runtime.artifactsPath); err != nil {
+//		spinner.Stop(false)
+//		return fmt.Errorf("error updating mysql init script: %v", err)
+//	}
+//
+//	if runtime.isPersistentVolume && !IsGcpRuntime() {
+//		nodeName, err := kubernetes.GetMasterNodeName()
+//		if err != nil {
+//			return fmt.Errorf("error getting master node name: %v", err)
+//		}
+//		if err := kubernetes.ApplyLable("nodes", nodeName, "disk=local", true); err != nil {
+//			return fmt.Errorf("error applying master node lable: %v", err)
+//		}
+//	}
+//	// Setup Cellery namespace
+//	spinner.SetNewAction("Setting up cellery namespace")
+//	if err := CreateCelleryNameSpace(); err != nil {
+//		return fmt.Errorf("error creating cellery namespace: %v", err)
+//	}
+//
+//	// Apply Istio CRDs
+//	spinner.SetNewAction("Applying istio crds")
+//	if err := ApplyIstioCrds(runtime.artifactsPath); err != nil {
+//		return fmt.Errorf("error creating istio crds: %v", err)
+//	}
+//	// Apply nginx resources
+//	spinner.SetNewAction("Creating ingress-nginx")
+//	if err := installNginx(runtime.artifactsPath, runtime.isLoadBalancerIngressMode); err != nil {
+//		return fmt.Errorf("error installing ingress-nginx: %v", err)
+//	}
+//	// sleep for few seconds - this is to make sure that the CRDs are properly applied
+//	time.Sleep(20 * time.Second)
+//
+//	// Enabling Istio injection
+//	spinner.SetNewAction("Enabling istio injection")
+//	if err := kubernetes.ApplyLable("namespace", "default", "istio-injection=enabled",
+//		true); err != nil {
+//		return fmt.Errorf("error enabling istio injection: %v", err)
+//	}
+//
+//	// Install istio
+//	spinner.SetNewAction("Installing istio")
+//	if err := InstallIstio(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts)); err != nil {
+//		return fmt.Errorf("error installing istio: %v", err)
+//	}
+//
+//	// Apply only knative serving CRD's
+//	if err := ApplyKnativeCrds(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts)); err != nil {
+//		return fmt.Errorf("error installing knative serving: %v", err)
+//	}
+//
+//	// Apply controller CRDs
+//	spinner.SetNewAction("Creating controller")
+//	if err := InstallController(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts)); err != nil {
+//		return fmt.Errorf("error creating cellery controller: %v", err)
+//	}
+//
+//	spinner.SetNewAction("Configuring mysql")
+//	if err := AddMysql(runtime.artifactsPath, runtime.isPersistentVolume); err != nil {
+//		return fmt.Errorf("error configuring mysql: %v", err)
+//	}
+//
+//	spinner.SetNewAction("Creating ConfigMaps")
+//	if err := CreateGlobalGatewayConfigMaps(runtime.artifactsPath); err != nil {
+//		return fmt.Errorf("error creating gateway configmaps: %v", err)
+//	}
+//	if err := CreateObservabilityConfigMaps(runtime.artifactsPath); err != nil {
+//		return fmt.Errorf("error creating observability configmaps: %v", err)
+//	}
+//	if err := CreateIdpConfigMaps(runtime.artifactsPath); err != nil {
+//		return fmt.Errorf("error creating idp configmaps: %v", err)
+//	}
+//
+//	if runtime.isPersistentVolume {
+//		spinner.SetNewAction("Creating Persistent Volume")
+//		if err := createPersistentVolume(runtime.artifactsPath, runtime.hasNfsStorage); err != nil {
+//			return fmt.Errorf("error creating persistent volume: %v", err)
+//		}
+//	}
+//
+//	if isCompleteSetup {
+//		spinner.SetNewAction("Adding apim")
+//		if err := addApim(runtime.artifactsPath, runtime.isPersistentVolume); err != nil {
+//			return fmt.Errorf("error creating apim deployment: %v", err)
+//		}
+//		spinner.SetNewAction("Adding observability")
+//		if err := addObservability(runtime.artifactsPath); err != nil {
+//			return fmt.Errorf("error creating observability deployment: %v", err)
+//		}
+//	} else {
+//		spinner.SetNewAction("Adding idp")
+//		if err := addIdp(runtime.artifactsPath); err != nil {
+//			return fmt.Errorf("error creating idp deployment: %v", err)
+//		}
+//	}
+//	if !runtime.isLoadBalancerIngressMode {
+//		if runtime.nodePortIpAddress != "" {
+//			spinner.SetNewAction("Adding node port ip address")
+//			originalIngressNginx, err := kubernetes.GetService("ingress-nginx", "ingress-nginx")
+//			if err != nil {
+//				return fmt.Errorf("error getting original ingress-nginx: %v", err)
+//			}
+//			updatedIngressNginx, err := kubernetes.GetService("ingress-nginx", "ingress-nginx")
+//			if err != nil {
+//				return fmt.Errorf("error getting updated ingress-nginx: %v", err)
+//			}
+//			updatedIngressNginx.Spec.ExternalIPs = append(updatedIngressNginx.Spec.ExternalIPs, runtime.nodePortIpAddress)
+//
+//			originalData, err := json.Marshal(originalIngressNginx)
+//			if err != nil {
+//				return fmt.Errorf("error marshalling original data: %v", err)
+//			}
+//			desiredData, err := json.Marshal(updatedIngressNginx)
+//			if err != nil {
+//				return fmt.Errorf("error marshalling desired data: %v", err)
+//			}
+//			patch, err := jsonpatch.CreatePatch(originalData, desiredData)
+//			if err != nil {
+//				return fmt.Errorf("error creating json patch: %v", err)
+//			}
+//			if len(patch) == 0 {
+//				return fmt.Errorf("no changes in ingress-nginx to apply")
+//			}
+//			patchBytes, err := json.Marshal(patch)
+//			if err != nil {
+//				return fmt.Errorf("error marshalling json patch: %v", err)
+//			}
+//			kubernetes.JsonPatchWithNameSpace("svc", "ingress-nginx", string(patchBytes), "ingress-nginx")
+//		}
+//	}
+//	spinner.Stop(true)
+//	return nil
+//}
+
 func (runtime *CelleryRuntime) Create() error {
 	spinner := util.StartNewSpinner("Creating cellery runtime")
-	if runtime.isPersistentVolume && !runtime.hasNfsStorage {
-		createFoldersRequiredForMysqlPvc()
-		createFoldersRequiredForApimPvc()
-	}
-	dbHostName := constants.MysqlHostNameForExistingCluster
-	dbUserName := constants.CellerySqlUserName
-	dbPassword := constants.CellerySqlPassword
-	if runtime.hasNfsStorage {
-		dbHostName = runtime.db.DbHostName
-		dbUserName = runtime.db.DbUserName
-		dbPassword = runtime.db.DbPassword
-		updateNfsServerDetails(runtime.nfs.NfsServerIp, runtime.nfs.FileShare, runtime.artifactsPath)
-	}
-	if err := updateMysqlCredentials(dbUserName, dbPassword, dbHostName, runtime.artifactsPath); err != nil {
-		spinner.Stop(false)
-		return fmt.Errorf("error updating mysql credentials: %v", err)
-	}
-	if err := updateInitSql(dbUserName, dbPassword, runtime.artifactsPath); err != nil {
-		spinner.Stop(false)
-		return fmt.Errorf("error updating mysql init script: %v", err)
-	}
-
-	if runtime.isPersistentVolume && !IsGcpRuntime() {
-		nodeName, err := kubernetes.GetMasterNodeName()
-		if err != nil {
-			return fmt.Errorf("error getting master node name: %v", err)
-		}
-		if err := kubernetes.ApplyLable("nodes", nodeName, "disk=local", true); err != nil {
-			return fmt.Errorf("error applying master node lable: %v", err)
-		}
-	}
-	// Setup Cellery namespace
-	spinner.SetNewAction("Setting up cellery namespace")
-	if err := CreateCelleryNameSpace(); err != nil {
-		return fmt.Errorf("error creating cellery namespace: %v", err)
-	}
-
-	// Apply Istio CRDs
-	spinner.SetNewAction("Applying istio crds")
-	if err := ApplyIstioCrds(runtime.artifactsPath); err != nil {
-		return fmt.Errorf("error creating istio crds: %v", err)
-	}
-	// Apply nginx resources
-	spinner.SetNewAction("Creating ingress-nginx")
-	if err := installNginx(runtime.artifactsPath, runtime.isLoadBalancerIngressMode); err != nil {
-		return fmt.Errorf("error installing ingress-nginx: %v", err)
-	}
-	// sleep for few seconds - this is to make sure that the CRDs are properly applied
-	time.Sleep(20 * time.Second)
-
-	// Enabling Istio injection
-	spinner.SetNewAction("Enabling istio injection")
-	if err := kubernetes.ApplyLable("namespace", "default", "istio-injection=enabled",
-		true); err != nil {
-		return fmt.Errorf("error enabling istio injection: %v", err)
-	}
-
-	// Install istio
-	spinner.SetNewAction("Installing istio")
-	if err := InstallIstio(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts)); err != nil {
-		return fmt.Errorf("error installing istio: %v", err)
-	}
-
-	// Apply only knative serving CRD's
-	if err := ApplyKnativeCrds(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts)); err != nil {
-		return fmt.Errorf("error installing knative serving: %v", err)
-	}
-
-	// Apply controller CRDs
-	spinner.SetNewAction("Creating controller")
-	if err := InstallController(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts)); err != nil {
-		return fmt.Errorf("error creating cellery controller: %v", err)
-	}
-
-	spinner.SetNewAction("Configuring mysql")
-	if err := AddMysql(runtime.artifactsPath, runtime.isPersistentVolume); err != nil {
-		return fmt.Errorf("error configuring mysql: %v", err)
-	}
-
-	spinner.SetNewAction("Creating ConfigMaps")
-	if err := CreateGlobalGatewayConfigMaps(runtime.artifactsPath); err != nil {
-		return fmt.Errorf("error creating gateway configmaps: %v", err)
-	}
-	if err := CreateObservabilityConfigMaps(runtime.artifactsPath); err != nil {
-		return fmt.Errorf("error creating observability configmaps: %v", err)
-	}
-	if err := CreateIdpConfigMaps(runtime.artifactsPath); err != nil {
-		return fmt.Errorf("error creating idp configmaps: %v", err)
-	}
-
-	if runtime.isPersistentVolume {
-		spinner.SetNewAction("Creating Persistent Volume")
-		if err := createPersistentVolume(runtime.artifactsPath, runtime.hasNfsStorage); err != nil {
-			return fmt.Errorf("error creating persistent volume: %v", err)
-		}
-	}
-
-	if isCompleteSetup {
-		spinner.SetNewAction("Adding apim")
-		if err := addApim(runtime.artifactsPath, runtime.isPersistentVolume); err != nil {
-			return fmt.Errorf("error creating apim deployment: %v", err)
-		}
-		spinner.SetNewAction("Adding observability")
-		if err := addObservability(runtime.artifactsPath); err != nil {
-			return fmt.Errorf("error creating observability deployment: %v", err)
-		}
-	} else {
-		spinner.SetNewAction("Adding idp")
-		if err := addIdp(runtime.artifactsPath); err != nil {
-			return fmt.Errorf("error creating idp deployment: %v", err)
-		}
-	}
-	if !runtime.isLoadBalancerIngressMode {
-		if runtime.nodePortIpAddress != "" {
-			spinner.SetNewAction("Adding node port ip address")
-			originalIngressNginx, err := kubernetes.GetService("ingress-nginx", "ingress-nginx")
-			if err != nil {
-				return fmt.Errorf("error getting original ingress-nginx: %v", err)
-			}
-			updatedIngressNginx, err := kubernetes.GetService("ingress-nginx", "ingress-nginx")
-			if err != nil {
-				return fmt.Errorf("error getting updated ingress-nginx: %v", err)
-			}
-			updatedIngressNginx.Spec.ExternalIPs = append(updatedIngressNginx.Spec.ExternalIPs, runtime.nodePortIpAddress)
-
-			originalData, err := json.Marshal(originalIngressNginx)
-			if err != nil {
-				return fmt.Errorf("error marshalling original data: %v", err)
-			}
-			desiredData, err := json.Marshal(updatedIngressNginx)
-			if err != nil {
-				return fmt.Errorf("error marshalling desired data: %v", err)
-			}
-			patch, err := jsonpatch.CreatePatch(originalData, desiredData)
-			if err != nil {
-				return fmt.Errorf("error creating json patch: %v", err)
-			}
-			if len(patch) == 0 {
-				return fmt.Errorf("no changes in ingress-nginx to apply")
-			}
-			patchBytes, err := json.Marshal(patch)
-			if err != nil {
-				return fmt.Errorf("error marshalling json patch: %v", err)
-			}
-			kubernetes.JsonPatchWithNameSpace("svc", "ingress-nginx", string(patchBytes), "ingress-nginx")
-		}
-	}
-	spinner.Stop(true)
-	return nil
-}
-
-func CreateRuntimeHelm(runtime *CelleryRuntime) error {
-	spinner := util.StartNewSpinner("Creating cellery runtime")
     //Install istio crds and components.
-	log.Printf("Deploying istio CRDs using istion-init chart")
+	log.Printf("Deploying istio CRDs using istio-init chart")
 	if err := util.ApplyHelmChartWithDefaultValues("istio-init", "istio-system"); err != nil {
 		return fmt.Errorf("error installing istio crds: %v", err)
 	}
@@ -347,7 +344,7 @@ func CreateRuntimeHelm(runtime *CelleryRuntime) error {
 	if errcon != nil {
 		log.Fatalf("error: %v", errcon)
 	}
-	if err := util.ApplyHelmChartWithCustomValues("cellery-runtime", "cellery-runtime", "apply", string(celleryYamls)); err != nil {
+	if err := util.ApplyHelmChartWithCustomValues("cellery-runtime", "cellery-system", "apply", string(celleryYamls)); err != nil {
 		return fmt.Errorf("error installing ingress controller: %v", err)
 	}
 	spinner.Stop(true)

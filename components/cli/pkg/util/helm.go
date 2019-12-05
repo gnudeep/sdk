@@ -136,7 +136,7 @@ func ApplyK8sResource(operation string, tmplString string, namespace string) err
 }
 //Apply helm chart with default values
 func ApplyHelmChartWithDefaultValues(chartName string, namespace string) error {
-	chartTemplate := RenderHelmChart(chartName, namespace, filepath.Join(UserHomeCelleryDir(), constants.HelmCarts), "")
+	chartTemplate := RenderHelmChart(chartName, namespace, filepath.Join(UserHomeCelleryDir(), constants.HelmCarts, chartName), "")
 	err := ApplyHelmTemplates(chartTemplate)
 	if err != nil {
 		return err
@@ -145,7 +145,7 @@ func ApplyHelmChartWithDefaultValues(chartName string, namespace string) error {
 }
 
 func ApplyHelmChartWithDefaultValuesCustomCmd(chartName string, namespace string, operation string) error {
-	chartTemplate := RenderHelmChart(chartName, namespace, filepath.Join(UserHomeCelleryDir(), constants.HelmCarts), "")
+	chartTemplate := RenderHelmChart(chartName, namespace, filepath.Join(UserHomeCelleryDir(), constants.HelmCarts, chartName), "")
 	err := ApplyK8sResource(operation, chartTemplate, namespace)
 	if err != nil {
 		return err
@@ -154,7 +154,7 @@ func ApplyHelmChartWithDefaultValuesCustomCmd(chartName string, namespace string
 }
 
 func ApplyHelmChartWithCustomValues(chartName string, namespace string, operation string, values string) error {
-	chartTemplate := RenderHelmChart(chartName, namespace, filepath.Join(UserHomeCelleryDir(), constants.HelmCarts), values)
+	chartTemplate := RenderHelmChart(chartName, namespace, filepath.Join(UserHomeCelleryDir(), constants.HelmCarts, chartName), values)
 	err := ApplyK8sResource(operation, chartTemplate, namespace)
 	if err != nil {
 		return err

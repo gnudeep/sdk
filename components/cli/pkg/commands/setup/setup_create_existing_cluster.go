@@ -109,9 +109,9 @@ func RunSetupCreateOnExistingCluster(cli cli.Cli, isPersistentVolume, hasNfsStor
 	artifactsPath := filepath.Join(cli.FileSystem().UserHome(), constants.CelleryHome, constants.K8sArtifacts)
 	os.RemoveAll(artifactsPath)
 	util.CopyDir(filepath.Join(cli.FileSystem().CelleryInstallationDir(), constants.K8sArtifacts), artifactsPath)
-	helmCharPath := filepath.Join(util.UserHomeDir(), constants.CelleryHome, constants.HelmCarts)
+	helmCharPath := filepath.Join(cli.FileSystem().UserHome(), constants.CelleryHome, constants.HelmCarts)
 	os.RemoveAll(helmCharPath)
-	util.CopyDir(filepath.Join(util.CelleryInstallationDir(), constants.HelmCarts), artifactsPath)
+	util.CopyDir(filepath.Join(filepath.Join(cli.FileSystem().CelleryInstallationDir()), constants.HelmCarts), helmCharPath)
 
 	cli.Runtime().SetArtifactsPath(artifactsPath)
 	cli.Runtime().SetPersistentVolume(isPersistentVolume)
