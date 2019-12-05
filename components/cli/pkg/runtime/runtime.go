@@ -275,30 +275,33 @@ func (runtime *CelleryRuntime) Create() error {
 		return fmt.Errorf("error installing knative crds: %v", err)
 	}
 
+	log.Printf("Deploying ingress controller Nodeport system using ingress-controller chart")
+	ingressControllerVals := IngressController{}
+	ingVals, errVal := util.GetHelmChartDefaultValues("ingress-controller")
+	if errVal != nil {
+		log.Fatalf("error: %v", errVal)
+	}
+	errYaml := yaml.Unmarshal([]byte(ingVals), &ingressControllerVals)
+	if errYaml != nil {
+		log.Fatalf("error: %v", errYaml)
+	}
 	if !runtime.isLoadBalancerIngressMode {
 		if runtime.nodePortIpAddress != "" {
-			log.Printf("Deploying ingress controller system using ingress-controller chart")
 			spinner.SetNewAction("Adding node port IP address")
-			ingressControllerVals := IngressController{}
-			ingVals, errVal := util.GetHelmChartDefaultValues("ingress-controller")
-			if errVal != nil {
-				errYaml := yaml.Unmarshal([]byte(ingVals), &ingressControllerVals)
-				if errYaml != nil {
-					log.Fatalf("error: %v", errYaml)
-				}
-			}
 			ingressControllerVals.NginxIngress.Controller.Service.Type = "NodePort"
 			ingressControllerVals.NginxIngress.Controller.ExternalIPs = []string{runtime.nodePortIpAddress}
-			controllerYamls, errcon := yaml.Marshal(&ingressControllerVals)
-			if errcon != nil {
-				log.Fatalf("error: %v", errcon)
-			}
-			if err := util.ApplyHelmChartWithCustomValues("ingress-controller", "ingress-nginx", "apply", string(controllerYamls)); err != nil {
-				return fmt.Errorf("error installing ingress controller: %v", err)
-			}
 		}
+	} else {
+		ingressControllerVals.NginxIngress.Controller.Service.Type = "LoadBalancer"
 	}
-	log.Printf("Deploying ingress cellery runtime using cellery-runtime chart")
+	controllerYamls, errcon := yaml.Marshal(&ingressControllerVals)
+	if errcon != nil {
+		log.Fatalf("error: %v", errcon)
+	}
+	if err := util.ApplyHelmChartWithCustomValues("ingress-controller", "ingress-nginx", "apply", string(controllerYamls)); err != nil {
+		return fmt.Errorf("error installing ingress controller: %v", err)
+	}
+
 	if runtime.isPersistentVolume && !runtime.hasNfsStorage {
 		createFoldersRequiredForMysqlPvc()
 		createFoldersRequiredForApimPvc()
