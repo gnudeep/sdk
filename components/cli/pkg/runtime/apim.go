@@ -28,15 +28,15 @@ import (
 	"strings"
 )
 
-func addApim(artifactsPath string, isPersistentVolume bool) error {
-	for _, v := range buildApimYamlPaths(artifactsPath, isPersistentVolume) {
-		err := kubernetes.ApplyFileWithNamespace(v, "cellery-system")
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
+//func addApim(artifactsPath string, isPersistentVolume bool) error {
+//	for _, v := range buildApimYamlPaths(artifactsPath, isPersistentVolume) {
+//		err := kubernetes.ApplyFileWithNamespace(v, "cellery-system")
+//		if err != nil {
+//			return err
+//		}
+//	}
+//	return nil
+//}
 
 //func deleteApim(artifactsPath string) error {
 //	for _, v := range buildApimYamlPaths(artifactsPath, false) {
@@ -96,7 +96,29 @@ func buildGlobalGatewayConfigMaps(artifactsPath string) []ConfigMap {
 	}
 }
 
+func addApim(artifactsPath string, isPersistentVolume bool) error {
+	log.Printf("Deploying control plane API Manager")
+	celleryValues := CelleryRuntimeVals{}
+	celleryVals, errCelVals := util.GetHelmChartDefaultValues("cellery-runtime")
+	if errCelVals != nil {
+		err := yaml.Unmarshal([]byte(celleryVals), &celleryValues)
+		if err != nil {
+			log.Fatalf("error: %v", err)
+		}
+	}
+	celleryValues.ApiManager.Enabled = true
+	celleryYamls, errcon := yaml.Marshal(&celleryValues)
+	if errcon != nil {
+		log.Fatalf("error: %v", errcon)
+	}
+	if err := util.ApplyHelmChartWithCustomValues("cellery-runtime", "cellery-system", "apply", string(celleryYamls)); err != nil {
+		return fmt.Errorf("error installing API manager: %v", err)
+	}
+	return nil
+}
+
 func deleteApim() error {
+	log.Printf("Deleting control plane API Manager")
 	celleryValues := CelleryRuntimeVals{}
 	chartName := "cellery-runtime"
 	celleryVals, errCelVals := util.GetHelmChartDefaultValues(chartName)
@@ -111,7 +133,7 @@ func deleteApim() error {
 	if errcon != nil {
 		log.Printf("error: %v", errcon)
 	}
-	if err := util.ApplyHelmChartWithCustomValues("cellery-runtime", "cellery-runtime", "delete", string(celleryYamls)); err != nil {
+	if err := util.ApplyHelmChartWithCustomValues("cellery-runtime", "cellery-system", "delete", string(celleryYamls)); err != nil {
 		return fmt.Errorf("error installing ingress controller: %v", err)
 	}
 	return nil

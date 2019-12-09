@@ -65,7 +65,7 @@ type CelleryRuntimeVals struct {
 		Nfs struct {
 			Enabled        bool `yaml:"enabled"`
 			ServerIp       string `yaml:"serverIp"`
-			SharedLocation string `yaml:"sharedLocation"`
+			ShareLocation string `yaml:"shareLocation"`
 		} `yaml:"nfs"`
 
 		LocalStorage struct {
@@ -80,6 +80,12 @@ type CelleryRuntimeVals struct {
 
 	ApiManager struct {
 		Enabled      bool `yaml:"enabled"`
+		Persistence struct {
+			Enabled bool `yaml:"enabled"`
+			Media string `yaml:"media"`
+			NfsServerIp   string `yaml:"nfsServerIp"`
+			SharedLocation	string `yaml:"sharedLocation"`
+		} `yaml:"persistence"`
 	} `yaml:"apim"`
 
 	Idp struct {

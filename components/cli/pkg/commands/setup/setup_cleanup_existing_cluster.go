@@ -118,30 +118,30 @@ func RunCleanupExisting(removeKnative, removeIstio, removeIngress, removeHpa, co
 	return nil
 }
 
-func cleanupCluster(removeKnative, removeIstio, removeIngress, removeHpa bool) {
-	kubernetes.DeleteNameSpace("cellery-system")
-	if removeKnative {
-		out, err := kubernetes.DeleteResource("apiservices.apiregistration.k8s.io", "v1beta1.custom.metrics.k8s.io")
-		if err != nil {
-			util.ExitWithErrorMessage("Error occurred while deleting the knative apiservice", fmt.Errorf(out))
-		}
-		kubernetes.DeleteNameSpace("knative-serving")
-	}
-	if removeIstio {
-		kubernetes.DeleteNameSpace("istio-system")
-	}
-	if removeIngress {
-		kubernetes.DeleteNameSpace("ingress-nginx")
-	}
-	if removeHpa {
-		runtime.DeleteComponent(runtime.HPA)
-	}
-	kubernetes.DeleteAllCells()
-	kubernetes.DeletePersistedVolume("wso2apim-local-pv")
-	kubernetes.DeletePersistedVolume("wso2apim-with-analytics-mysql-pv")
-}
+//func cleanupCluster(removeKnative, removeIstio, removeIngress, removeHpa bool) {
+//	kubernetes.DeleteNameSpace("cellery-system")
+//	if removeKnative {
+//		out, err := kubernetes.DeleteResource("apiservices.apiregistration.k8s.io", "v1beta1.custom.metrics.k8s.io")
+//		if err != nil {
+//			util.ExitWithErrorMessage("Error occurred while deleting the knative apiservice", fmt.Errorf(out))
+//		}
+//		kubernetes.DeleteNameSpace("knative-serving")
+//	}
+//	if removeIstio {
+//		kubernetes.DeleteNameSpace("istio-system")
+//	}
+//	if removeIngress {
+//		kubernetes.DeleteNameSpace("ingress-nginx")
+//	}
+//	if removeHpa {
+//		runtime.DeleteComponent(runtime.HPA)
+//	}
+//	kubernetes.DeleteAllCells()
+//	kubernetes.DeletePersistedVolume("wso2apim-local-pv")
+//	kubernetes.DeletePersistedVolume("wso2apim-with-analytics-mysql-pv")
+//}
 
-func cleanupClusterViaHelm(removeKnative, removeIstio, removeIngress, removeHpa bool) {
+func cleanupCluster(removeKnative, removeIstio, removeIngress, removeHpa bool) {
 	//Delete all cells
 	kubernetes.DeleteAllCells()
 	//Remove cellery-system artifacts
@@ -175,10 +175,10 @@ func cleanupClusterViaHelm(removeKnative, removeIstio, removeIngress, removeHpa 
 	}
 	if removeIngress {
 		log.Print("ingress-controller deletion started")
-		if err := util.ApplyHelmChartWithDefaultValuesCustomCmd("ingress-controller", "ingress-controller", "delete"); err != nil {
+		if err := util.ApplyHelmChartWithDefaultValuesCustomCmd("ingress-controller", "ingress-nginx", "delete"); err != nil {
 			log.Printf("error removing ingress-controller artifacts: %v", err)
 		}
-		kubernetes.DeleteNameSpace("ingress-controller")
+		kubernetes.DeleteNameSpace("ingress-nginx")
 	}
 	if removeHpa {
 		runtime.DeleteComponent(runtime.HPA)

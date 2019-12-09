@@ -270,6 +270,9 @@ func (runtime *CelleryRuntime) Create() error {
 	if err := util.ApplyHelmChartWithDefaultValues("istio", "istio-system"); err != nil {
 		return fmt.Errorf("error installing istio : %v", err)
 	}
+
+	time.Sleep(20 * time.Second)
+
 	log.Printf("Deploying knative system using knative-crd chart")
 	if err := util.ApplyHelmChartWithDefaultValues("knative-crd", "default"); err != nil {
 		return fmt.Errorf("error installing knative crds: %v", err)
@@ -302,10 +305,7 @@ func (runtime *CelleryRuntime) Create() error {
 		return fmt.Errorf("error installing ingress controller: %v", err)
 	}
 
-	if runtime.isPersistentVolume && !runtime.hasNfsStorage {
-		createFoldersRequiredForMysqlPvc()
-		createFoldersRequiredForApimPvc()
-	}
+	log.Printf("Deploying cellery runtime using cellery-runtime chart")
 	celleryValues := CelleryRuntimeVals{}
 	chartName := "cellery-runtime"
 	celleryVals, errCelVals := util.GetHelmChartDefaultValues(chartName)
@@ -315,18 +315,24 @@ func (runtime *CelleryRuntime) Create() error {
 			log.Fatalf("error: %v", err)
 		}
 	}
-	if runtime.hasNfsStorage {
-		updateNfsServerDetails(runtime.nfs.NfsServerIp, runtime.nfs.FileShare, runtime.artifactsPath)
-		celleryValues.Mysql.Nfs.Enabled = true
-		celleryValues.Mysql.Nfs.ServerIp = runtime.nfs.NfsServerIp
-		celleryValues.Mysql.Nfs.SharedLocation = runtime.nfs.FileShare
-	}
 	celleryValues.Mysql.Enabled = true
 	if runtime.isPersistentVolume {
 		celleryValues.Mysql.Persistence.Enabled = true
+		if runtime.hasNfsStorage {
+			celleryValues.Mysql.Nfs.Enabled = true
+			celleryValues.Mysql.Nfs.ServerIp = runtime.nfs.NfsServerIp
+			celleryValues.Mysql.Nfs.ShareLocation = runtime.nfs.FileShare
+		}else {
+			createFoldersRequiredForMysqlPvc()
+			celleryValues.Mysql.LocalStorage.Enabled = true
+		}
 	} else {
 		celleryValues.Mysql.Persistence.Enabled = false
 	}
+
+	spinner.SetNewAction("Creating controller")
+	celleryValues.Controller.Enabled = true
+
 	// Lable the node to support local persistence-volume
 	if runtime.isPersistentVolume && !IsGcpRuntime() {
 		nodeName, err := kubernetes.GetMasterNodeName()
@@ -340,13 +346,25 @@ func (runtime *CelleryRuntime) Create() error {
 	if !isCompleteSetup {
 		celleryValues.Idp.Enabled = true
 	} else {
+		createFoldersRequiredForApimPvc()
 		celleryValues.ApiManager.Enabled = true
+		if runtime.isPersistentVolume {
+			celleryValues.ApiManager.Persistence.Enabled = true
+			if runtime.hasNfsStorage {
+				celleryValues.ApiManager.Persistence.Media = "nfs"
+				celleryValues.ApiManager.Persistence.NfsServerIp = runtime.nfs.NfsServerIp
+				celleryValues.ApiManager.Persistence.SharedLocation = runtime.nfs.FileShare + "/" + "apim_repository_deployment_server"
+			} else {
+				celleryValues.ApiManager.Persistence.Media = "local-storage"
+			}
+		}
 		celleryValues.Observability.Enabled = true
 	}
 	celleryYamls, errcon := yaml.Marshal(&celleryValues)
 	if errcon != nil {
 		log.Fatalf("error: %v", errcon)
 	}
+	log.Printf(string(celleryYamls))
 	if err := util.ApplyHelmChartWithCustomValues("cellery-runtime", "cellery-system", "apply", string(celleryYamls)); err != nil {
 		return fmt.Errorf("error installing ingress controller: %v", err)
 	}
