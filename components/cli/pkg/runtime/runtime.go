@@ -310,10 +310,11 @@ func (runtime *CelleryRuntime) Create() error {
 	chartName := "cellery-runtime"
 	celleryVals, errCelVals := util.GetHelmChartDefaultValues(chartName)
 	if errCelVals != nil {
-		err := yaml.Unmarshal([]byte(celleryVals), &celleryValues)
-		if err != nil {
-			log.Fatalf("error: %v", err)
-		}
+		log.Fatalf("error: %v", errCelVals)
+	}
+	err := yaml.Unmarshal([]byte(celleryVals), &celleryValues)
+	if err != nil {
+		log.Fatalf("error: %v", err)
 	}
 	celleryValues.Mysql.Enabled = true
 	if runtime.isPersistentVolume {
