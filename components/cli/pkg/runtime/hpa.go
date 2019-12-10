@@ -28,15 +28,15 @@ import (
 	"cellery.io/cellery/components/cli/pkg/kubernetes"
 )
 
-func InstallHPA(artifactsPath string) error {
-	for _, v := range buildHPAYamlPaths(artifactsPath) {
-		err := kubernetes.CreateFile(v)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
+//func InstallHPA(artifactsPath string) error {
+//	for _, v := range buildHPAYamlPaths(artifactsPath) {
+//		err := kubernetes.CreateFile(v)
+//		if err != nil {
+//			return err
+//		}
+//	}
+//	return nil
+//}
 
 //func deleteHpa(artifactsPath string) error {
 //	for _, v := range buildHPAYamlPaths(artifactsPath) {
@@ -74,10 +74,18 @@ func buildHPAYamlPaths(artifactsPath string) []string {
 	}
 }
 
+func InstallHPA(artifactsPath string) error {
+	log.Printf("Deploying metrics-server system using metrics-server chart")
+	if err := util.ApplyHelmChartWithCustomValues("metrics-server", "kube-system", "apply", ""); err != nil {
+		return fmt.Errorf("error deploying metrics-server: %v", err)
+	}
+	return nil
+}
+
 func deleteHpa() error {
-	log.Printf("Deploying knative system using knative-crd chart")
-	if err := util.ApplyHelmChartWithCustomValues("knative-crd", "default", "delete", ""); err != nil {
-		return fmt.Errorf("error installing knative crds: %v", err)
+	log.Printf("Deleting metrics-server system using metrics-server chart")
+	if err := util.ApplyHelmChartWithCustomValues("metrics-server", "kube-system", "delete", ""); err != nil {
+		return fmt.Errorf("error deleting metrics-server: %v", err)
 	}
 	return nil
 }
