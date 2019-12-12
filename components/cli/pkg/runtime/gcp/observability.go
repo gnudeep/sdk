@@ -19,6 +19,10 @@
 package gcp
 
 import (
+	"fmt"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"gopkg.in/yaml.v2"
+	"log"
 	"path/filepath"
 
 	"cellery.io/cellery/components/cli/pkg/kubernetes"
@@ -49,15 +53,15 @@ func buildObservabilityConfigMaps() []ConfigMap {
 	}
 }
 
-func AddObservability() error {
-	for _, v := range buildObservabilityYamlPaths() {
-		err := kubernetes.ApplyFile(v)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
+//func AddObservability() error {
+//	for _, v := range buildObservabilityYamlPaths() {
+//		err := kubernetes.ApplyFile(v)
+//		if err != nil {
+//			return err
+//		}
+//	}
+//	return nil
+//}
 
 func buildObservabilityYamlPaths() []string {
 	base := buildArtifactsPath(runtime.Observability)
@@ -69,4 +73,25 @@ func buildObservabilityYamlPaths() []string {
 		filepath.Join(base, "observability-agent", "telemetry-agent.yaml"),
 		filepath.Join(base, "observability-agent", "tracing-agent.yaml"),
 	}
+}
+
+func AddObservability(celleryValues runtime.CelleryRuntimeVals) error {
+	chartName := "cellery-runtime"
+	celleryVals, errCelVals := util.GetHelmChartDefaultValues(chartName)
+	if errCelVals != nil {
+		err := yaml.Unmarshal([]byte(celleryVals), &celleryValues)
+		if err != nil {
+			log.Printf("error: %v", err)
+		}
+	}
+	celleryValues.Observability.Enabled = true
+	celleryYamls, errcon := yaml.Marshal(&celleryValues)
+	if errcon != nil {
+		log.Printf("error: %v", errcon)
+	}
+	if err := util.ApplyHelmChartWithCustomValues("cellery-runtime", "cellery-system",
+		"delete", string(celleryYamls)); err != nil {
+		return fmt.Errorf("error installing ingress controller: %v", err)
+	}
+	return nil
 }

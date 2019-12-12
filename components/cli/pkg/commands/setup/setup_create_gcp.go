@@ -195,7 +195,7 @@ func deployCompleteCelleryRuntime(platform *gcpPlatform.Gcp) {
 	}
 
 	// Create observability
-	if err := gcp.AddObservability(); err != nil {
+	if err := gcp.AddObservability(celleryValues); err != nil {
 		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
 	}
 	//Create NGinx

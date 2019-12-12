@@ -111,7 +111,8 @@ func deleteObservability() error {
 	if errcon != nil {
 		log.Printf("error: %v", errcon)
 	}
-	if err := util.ApplyHelmChartWithCustomValues("cellery-runtime", "cellery-system", "delete", string(celleryYamls)); err != nil {
+	if err := util.ApplyHelmChartWithCustomValues("cellery-runtime", "cellery-system",
+		"delete", string(celleryYamls)); err != nil {
 		return fmt.Errorf("error installing ingress controller: %v", err)
 	}
 	return nil
