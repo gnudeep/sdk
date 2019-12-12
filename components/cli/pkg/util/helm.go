@@ -28,6 +28,7 @@ import (
 	"k8s.io/helm/pkg/proto/hapi/chart"
 	"k8s.io/helm/pkg/renderutil"
 	"log"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -160,4 +161,16 @@ func ApplyHelmChartWithCustomValues(chartName string, namespace string, operatio
 		return err
 	}
 	return nil
+}
+
+func CreateNameSpace(namespace string) error {
+	var cmd *exec.Cmd
+	cmd = exec.Command(
+		constants.KubeCtl,
+		"create",
+		"ns",
+		namespace)
+
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }

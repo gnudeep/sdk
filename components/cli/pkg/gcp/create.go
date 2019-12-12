@@ -112,6 +112,9 @@ func (gcp *Gcp) configureMysql() error {
 	sqlIpAddress, serviceAccountEmailAddress := gcp.getSqlServiceAccount(gcp.ctx, gcp.sqlService, gcp.projectName,
 		dbInstanceNamePrefix+uuid)
 
+	gcp.SqlCredential.SqlPassword = sqlPassword+uuid
+	gcp.SqlCredential.SqlUserName = sqlUserName
+
 	if err := gcp2.UpdateMysqlCredentials(sqlUserName, sqlPassword+uuid,
 		sqlIpAddress); err != nil {
 		return fmt.Errorf("error updating mysql credentials: %v", err)

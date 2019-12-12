@@ -20,6 +20,8 @@ package setup
 
 import (
 	"fmt"
+	"gopkg.in/yaml.v2"
+	"log"
 	"path/filepath"
 	"time"
 
@@ -48,11 +50,10 @@ func RunSetupCreateGcp(isCompleteSetup bool) error {
 		gcpSpinner.Stop(false)
 	}
 	gcpSpinner.SetNewAction("Installing cellery runtime")
-
 	if isCompleteSetup {
-		createCompleteGcpRuntime()
+		createCompleteGcpRuntime(platform)
 	} else {
-		createMinimalGcpRuntime()
+		createMinimalGcpRuntime(platform)
 	}
 	runtime.WaitFor(true, false)
 	return nil
@@ -87,20 +88,20 @@ func createGcp(cli cli.Cli) error {
 	return nil
 }
 
-func createMinimalGcpRuntime() {
+func createMinimalGcpRuntime(platform *gcpPlatform.Gcp) {
 	// Deploy cellery runtime
-	deployMinimalCelleryRuntime()
+	deployMinimalCelleryRuntime(platform)
 	util.RemoveDir(filepath.Join(util.UserHomeCelleryDir(), constants.K8sArtifacts))
 }
 
-func createCompleteGcpRuntime() error {
+func createCompleteGcpRuntime(platform *gcpPlatform.Gcp) error {
 	// Deploy cellery runtime
-	deployCompleteCelleryRuntime()
+	deployCompleteCelleryRuntime(platform)
 	util.RemoveDir(filepath.Join(util.UserHomeCelleryDir(), constants.K8sArtifacts))
 	return nil
 }
 
-func createController() error {
+func createControllerx() error {
 	// Give permission to the user
 	if err := kubernetes.CreateClusterRoleBinding("cluster-admin", accountName); err != nil {
 		return fmt.Errorf("error creating cluster role binding, %v", err)
@@ -135,25 +136,62 @@ func createController() error {
 	return nil
 }
 
-func deployMinimalCelleryRuntime() error {
+func createController() error {
+	if err := kubernetes.CreateClusterRoleBinding("cluster-admin", accountName); err != nil {
+		return fmt.Errorf("error creating cluster role binding, %v", err)
+	}
+	// Setup Cellery namespace
+	if err := util.CreateNameSpace("cellery-system"); err != nil {
+		return fmt.Errorf("error creating cellery namespace, %v", err)
+	}
+	//Install istio crds and components.
+	log.Printf("Deploying istio CRDs using istio-init chart")
+	if err := util.ApplyHelmChartWithDefaultValues("istio-init", "istio-system"); err != nil {
+		return fmt.Errorf("error installing istio crds: %v", err)
+	}
+	// sleep for few seconds - this is to make sure that the CRDs are properly applied
+	time.Sleep(20 * time.Second)
+	// Enabling Istio injection
+	if err := kubernetes.ApplyLable("namespace", "default", "istio-injection=enabled",
+		false); err != nil {
+		return err
+	}
+	log.Printf("Deploying istio system using istio chart")
+	if err := util.ApplyHelmChartWithDefaultValues("istio", "istio-system"); err != nil {
+		return fmt.Errorf("error installing istio : %v", err)
+	}
+	log.Printf("Deploying knative system using knative-crd chart")
+	if err := util.ApplyHelmChartWithDefaultValues("knative-crd", "default"); err != nil {
+		return fmt.Errorf("error installing knative crds: %v", err)
+	}
+	return nil
+}
+
+func deployMinimalCelleryRuntime(platform *gcpPlatform.Gcp) error {
+	celleryValues := runtime.CelleryRuntimeVals{}
+	celleryValues.Global.CelleryRuntime.Db.CarbonDb.Username = platform.SqlCredential.SqlUserName
+	celleryValues.Global.CelleryRuntime.Db.CarbonDb.Password = platform.SqlCredential.SqlPassword
 	errorDeployingCelleryRuntime := "Error deploying cellery runtime"
 
 	createController()
-	createAllDeploymentArtifacts()
-	createIdpGcp(errorDeployingCelleryRuntime)
-	createNGinx(errorDeployingCelleryRuntime)
+	//createAllDeploymentArtifacts()
+	createIdpGcp(celleryValues, errorDeployingCelleryRuntime)
+	createNGinx(platform, errorDeployingCelleryRuntime)
 
 	return nil
 }
 
-func deployCompleteCelleryRuntime() {
+func deployCompleteCelleryRuntime(platform *gcpPlatform.Gcp) {
+	celleryValues := runtime.CelleryRuntimeVals{}
+	celleryValues.Global.CelleryRuntime.Db.CarbonDb.Username = platform.SqlCredential.SqlUserName
+	celleryValues.Global.CelleryRuntime.Db.CarbonDb.Password = platform.SqlCredential.SqlPassword
 	errorDeployingCelleryRuntime := "Error deploying cellery runtime"
 
 	createController()
 	createAllDeploymentArtifacts()
 
 	//Create gateway deployment and the service
-	if err := gcp.AddApim(); err != nil {
+	if err := gcp.AddApim(celleryValues); err != nil {
 		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
 	}
 
@@ -162,20 +200,41 @@ func deployCompleteCelleryRuntime() {
 		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
 	}
 	//Create NGinx
-	createNGinx(errorDeployingCelleryRuntime)
+	createNGinx(platform, errorDeployingCelleryRuntime)
 }
 
-func createIdpGcp(errorDeployingCelleryRuntime string) {
-	// Create IDP deployment and the service
-	if err := gcp.CreateIdp(); err != nil {
+func createIdpGcp(celleryValues runtime.CelleryRuntimeVals, errorDeployingCelleryRuntime string) {
+	//Create IDP deployment and the service
+	if err := gcp.CreateIdp(celleryValues); err != nil {
 		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
 	}
+
+
 }
 
-func createNGinx(errorMessage string) {
+func createNGinx(platform *gcpPlatform.Gcp, errorMessage string) {
 	// Install nginx-ingress for control plane ingress
-	if err := gcp.InstallNginx(); err != nil {
-		util.ExitWithErrorMessage(errorMessage, err)
+	//if err := gcp.InstallNginx(); err != nil {
+	//	util.ExitWithErrorMessage(errorMessage, err)
+	//}
+	log.Printf("Deploying ingress controller Nodeport system using ingress-controller chart")
+	ingressControllerVals := runtime.IngressController{}
+	ingVals, errVal := util.GetHelmChartDefaultValues("ingress-controller")
+	if errVal != nil {
+		log.Fatalf("error: %v", errVal)
+	}
+	errYaml := yaml.Unmarshal([]byte(ingVals), &ingressControllerVals)
+	if errYaml != nil {
+		log.Fatalf("error: %v", errYaml)
+	}
+	ingressControllerVals.NginxIngress.Controller.Service.Type = "LoadBalancer"
+	controllerYamls, errcon := yaml.Marshal(&ingressControllerVals)
+	if errcon != nil {
+		log.Fatalf("error: %v", errcon)
+	}
+	if err := util.ApplyHelmChartWithCustomValues("ingress-controller", "ingress-nginx",
+		"apply", string(controllerYamls)); err != nil {
+		fmt.Errorf("error installing ingress controller: %v", err)
 	}
 }
 

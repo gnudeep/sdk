@@ -266,12 +266,19 @@ func (runtime *CelleryRuntime) Create() error {
 	if err := util.ApplyHelmChartWithDefaultValues("istio-init", "istio-system"); err != nil {
 		return fmt.Errorf("error installing istio crds: %v", err)
 	}
+	// sleep for few seconds - this is to make sure that the CRDs are properly applied
+	time.Sleep(20 * time.Second)
+	// Enabling Istio injection
+	spinner.SetNewAction("Enabling istio injection")
+	if err := kubernetes.ApplyLable("namespace", "default", "istio-injection=enabled",
+		true); err != nil {
+		return fmt.Errorf("error enabling istio injection: %v", err)
+	}
 	log.Printf("Deploying istio system using istio chart")
 	if err := util.ApplyHelmChartWithDefaultValues("istio", "istio-system"); err != nil {
 		return fmt.Errorf("error installing istio : %v", err)
 	}
-
-	time.Sleep(20 * time.Second)
+	//time.Sleep(20 * time.Second)
 
 	log.Printf("Deploying knative system using knative-crd chart")
 	if err := util.ApplyHelmChartWithDefaultValues("knative-crd", "default"); err != nil {
@@ -301,7 +308,8 @@ func (runtime *CelleryRuntime) Create() error {
 	if errcon != nil {
 		log.Fatalf("error: %v", errcon)
 	}
-	if err := util.ApplyHelmChartWithCustomValues("ingress-controller", "ingress-nginx", "apply", string(controllerYamls)); err != nil {
+	if err := util.ApplyHelmChartWithCustomValues("ingress-controller", "ingress-nginx",
+		"apply", string(controllerYamls)); err != nil {
 		return fmt.Errorf("error installing ingress controller: %v", err)
 	}
 

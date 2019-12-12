@@ -47,6 +47,11 @@ func init() {
 	uuid = strconv.Itoa(rand.Intn(1000))
 }
 
+type SqlServiceCredential struct {
+	SqlUserName string
+	SqlPassword string
+}
+
 type Gcp struct {
 	ctx           context.Context
 	service       *container.Service
@@ -60,6 +65,7 @@ type Gcp struct {
 	nfsService    *file.Service
 	storageClient *storage.Client
 	bucketName    string
+	SqlCredential SqlServiceCredential
 }
 
 // NewGcp returns a Gcp instance.

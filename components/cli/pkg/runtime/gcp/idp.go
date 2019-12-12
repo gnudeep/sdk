@@ -19,6 +19,10 @@
 package gcp
 
 import (
+	"fmt"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"gopkg.in/yaml.v2"
+	"log"
 	"path/filepath"
 
 	"cellery.io/cellery/components/cli/pkg/kubernetes"
@@ -35,15 +39,15 @@ func CreateIdpConfigMaps() error {
 	return nil
 }
 
-func CreateIdp() error {
-	for _, v := range buildIdpYamlPaths() {
-		err := kubernetes.ApplyFileWithNamespace(v, "cellery-system")
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
+//func CreateIdp() error {
+//	for _, v := range buildIdpYamlPaths() {
+//		err := kubernetes.ApplyFileWithNamespace(v, "cellery-system")
+//		if err != nil {
+//			return err
+//		}
+//	}
+//	return nil
+//}
 
 func buildIdpConfigMaps() []ConfigMap {
 	base := buildArtifactsPath(runtime.IdentityProvider)
@@ -60,4 +64,29 @@ func buildIdpYamlPaths() []string {
 	return []string{
 		filepath.Join(base, "global-idp.yaml"),
 	}
+}
+
+func CreateIdp(celleryValues runtime.CelleryRuntimeVals) error {
+	log.Printf("Deploying cellery runtime using cellery-runtime chart")
+	chartName := "cellery-runtime"
+	celleryVals, errCelVals := util.GetHelmChartDefaultValues(chartName)
+	if errCelVals != nil {
+		log.Fatalf("error: %v", errCelVals)
+	}
+	err := yaml.Unmarshal([]byte(celleryVals), &celleryValues)
+	if err != nil {
+		log.Fatalf("error: %v", err)
+	}
+	celleryValues.Idp.Enabled = true
+
+	celleryYamls, errcon := yaml.Marshal(&celleryValues)
+	if errcon != nil {
+		log.Fatalf("error: %v", errcon)
+	}
+	//log.Printf(string(celleryYamls))
+	if err := util.ApplyHelmChartWithCustomValues("cellery-runtime", "cellery-system",
+		"apply", string(celleryYamls)); err != nil {
+		fmt.Errorf("error installing ingress controller: %v", err)
+	}
+	return nil
 }
