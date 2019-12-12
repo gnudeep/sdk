@@ -19,21 +19,24 @@
 package gcp
 
 import (
+	"fmt"
+	"github.com/cellery-io/sdk/components/cli/pkg/util"
+	"gopkg.in/yaml.v2"
+	"log"
 	"path/filepath"
 
-	"cellery.io/cellery/components/cli/pkg/kubernetes"
 	"cellery.io/cellery/components/cli/pkg/runtime"
 )
 
-func InstallNginx() error {
-	for _, file := range buildNginxYamlPaths() {
-		err := kubernetes.ApplyFile(file)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
+//func InstallNginx() error {
+//	for _, file := range buildNginxYamlPaths() {
+//		err := kubernetes.ApplyFile(file)
+//		if err != nil {
+//			return err
+//		}
+//	}
+//	return nil
+//}
 
 func buildNginxYamlPaths() []string {
 	base := buildArtifactsPath(runtime.System)
@@ -41,4 +44,27 @@ func buildNginxYamlPaths() []string {
 		filepath.Join(base, "mandatory.yaml"),
 		filepath.Join(base, "cloud-generic.yaml"),
 	}
+}
+
+func InstallNginx() error {
+	log.Printf("Deploying ingress controller Nodeport system using ingress-controller chart")
+	ingressControllerVals := runtime.IngressController{}
+	ingVals, errVal := util.GetHelmChartDefaultValues("ingress-controller")
+	if errVal != nil {
+		log.Fatalf("error: %v", errVal)
+	}
+	errYaml := yaml.Unmarshal([]byte(ingVals), &ingressControllerVals)
+	if errYaml != nil {
+		log.Fatalf("error: %v", errYaml)
+	}
+	ingressControllerVals.NginxIngress.Controller.Service.Type = "LoadBalancer"
+	controllerYamls, errcon := yaml.Marshal(&ingressControllerVals)
+	if errcon != nil {
+		log.Fatalf("error: %v", errcon)
+	}
+	if err := util.ApplyHelmChartWithCustomValues("ingress-controller", "ingress-nginx",
+		"apply", string(controllerYamls)); err != nil {
+		fmt.Errorf("error installing ingress controller: %v", err)
+	}
+	return nil
 }

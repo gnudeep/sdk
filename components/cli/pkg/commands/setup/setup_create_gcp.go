@@ -20,7 +20,6 @@ package setup
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"log"
 	"path/filepath"
 	"time"
@@ -176,7 +175,7 @@ func deployMinimalCelleryRuntime(platform *gcpPlatform.Gcp) error {
 	createController()
 	//createAllDeploymentArtifacts()
 	createIdpGcp(celleryValues, errorDeployingCelleryRuntime)
-	createNGinx(platform, errorDeployingCelleryRuntime)
+	createNGinx(errorDeployingCelleryRuntime)
 
 	return nil
 }
@@ -200,7 +199,7 @@ func deployCompleteCelleryRuntime(platform *gcpPlatform.Gcp) {
 		util.ExitWithErrorMessage(errorDeployingCelleryRuntime, err)
 	}
 	//Create NGinx
-	createNGinx(platform, errorDeployingCelleryRuntime)
+	createNGinx(errorDeployingCelleryRuntime)
 }
 
 func createIdpGcp(celleryValues runtime.CelleryRuntimeVals, errorDeployingCelleryRuntime string) {
@@ -212,30 +211,12 @@ func createIdpGcp(celleryValues runtime.CelleryRuntimeVals, errorDeployingCeller
 
 }
 
-func createNGinx(platform *gcpPlatform.Gcp, errorMessage string) {
-	// Install nginx-ingress for control plane ingress
-	//if err := gcp.InstallNginx(); err != nil {
-	//	util.ExitWithErrorMessage(errorMessage, err)
-	//}
-	log.Printf("Deploying ingress controller Nodeport system using ingress-controller chart")
-	ingressControllerVals := runtime.IngressController{}
-	ingVals, errVal := util.GetHelmChartDefaultValues("ingress-controller")
-	if errVal != nil {
-		log.Fatalf("error: %v", errVal)
+func createNGinx(errorMessage string) {
+	//Install nginx-ingress for control plane ingress
+	if err := gcp.InstallNginx(); err != nil {
+		util.ExitWithErrorMessage(errorMessage, err)
 	}
-	errYaml := yaml.Unmarshal([]byte(ingVals), &ingressControllerVals)
-	if errYaml != nil {
-		log.Fatalf("error: %v", errYaml)
-	}
-	ingressControllerVals.NginxIngress.Controller.Service.Type = "LoadBalancer"
-	controllerYamls, errcon := yaml.Marshal(&ingressControllerVals)
-	if errcon != nil {
-		log.Fatalf("error: %v", errcon)
-	}
-	if err := util.ApplyHelmChartWithCustomValues("ingress-controller", "ingress-nginx",
-		"apply", string(controllerYamls)); err != nil {
-		fmt.Errorf("error installing ingress controller: %v", err)
-	}
+
 }
 
 func createAllDeploymentArtifacts() {
