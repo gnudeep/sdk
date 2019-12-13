@@ -112,6 +112,7 @@ func (gcp *Gcp) configureMysql() error {
 	sqlIpAddress, serviceAccountEmailAddress := gcp.getSqlServiceAccount(gcp.ctx, gcp.sqlService, gcp.projectName,
 		dbInstanceNamePrefix+uuid)
 
+	gcp.SqlHostName = sqlIpAddress
 	gcp.SqlCredential.SqlPassword = sqlPassword+uuid
 	gcp.SqlCredential.SqlUserName = sqlUserName
 

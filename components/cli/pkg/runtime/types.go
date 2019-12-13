@@ -35,6 +35,7 @@ type CelleryRuntimeVals struct {
 	Global struct {
 		CelleryRuntime struct {
 			Db struct {
+				Hostname string `yaml:"host"`
 				CarbonDb struct {
 					Username string `yaml:"username"`
 					Password string `yaml:"password"`

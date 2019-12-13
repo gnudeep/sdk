@@ -20,6 +20,7 @@ package setup
 
 import (
 	"fmt"
+	"gopkg.in/yaml.v2"
 	"log"
 	"path/filepath"
 	"time"
@@ -39,6 +40,7 @@ var accountName string
 
 func RunSetupCreateGcp(isCompleteSetup bool) error {
 	util.CopyK8sArtifacts(util.UserHomeCelleryDir())
+	util.CopyHelmArtifacts(util.UserHomeCelleryDir())
 	gcpSpinner := util.StartNewSpinner("Creating Cellery runtime on celleryGcp")
 	platform, err := gcpPlatform.NewGcp()
 	if err != nil {
@@ -143,6 +145,10 @@ func createController() error {
 	if err := util.CreateNameSpace("cellery-system"); err != nil {
 		return fmt.Errorf("error creating cellery namespace, %v", err)
 	}
+	// Setup istio-system namespace
+	if err := util.CreateNameSpace("istio-system"); err != nil {
+		return fmt.Errorf("error creating cellery namespace, %v", err)
+	}
 	//Install istio crds and components.
 	log.Printf("Deploying istio CRDs using istio-init chart")
 	if err := util.ApplyHelmChartWithDefaultValues("istio-init", "istio-system"); err != nil {
@@ -168,6 +174,16 @@ func createController() error {
 
 func deployMinimalCelleryRuntime(platform *gcpPlatform.Gcp) error {
 	celleryValues := runtime.CelleryRuntimeVals{}
+	chartName := "cellery-runtime"
+	celleryVals, errCelVals := util.GetHelmChartDefaultValues(chartName)
+	if errCelVals != nil {
+		log.Fatalf("error: %v", errCelVals)
+	}
+	err := yaml.Unmarshal([]byte(celleryVals), &celleryValues)
+	if err != nil {
+		log.Fatalf("error: %v", err)
+	}
+	celleryValues.Global.CelleryRuntime.Db.Hostname = platform.SqlHostName
 	celleryValues.Global.CelleryRuntime.Db.CarbonDb.Username = platform.SqlCredential.SqlUserName
 	celleryValues.Global.CelleryRuntime.Db.CarbonDb.Password = platform.SqlCredential.SqlPassword
 	errorDeployingCelleryRuntime := "Error deploying cellery runtime"

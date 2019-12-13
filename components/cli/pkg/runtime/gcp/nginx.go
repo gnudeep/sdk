@@ -47,7 +47,11 @@ func buildNginxYamlPaths() []string {
 }
 
 func InstallNginx() error {
-	log.Printf("Deploying ingress controller Nodeport system using ingress-controller chart")
+	log.Printf("Deploying ingress controller LoadBalancer system using ingress-controller chart")
+	// Setup nginx ingress-controller namespace
+	if err := util.CreateNameSpace("ingress-nginx"); err != nil {
+		return fmt.Errorf("error creating cellery namespace, %v", err)
+	}
 	ingressControllerVals := runtime.IngressController{}
 	ingVals, errVal := util.GetHelmChartDefaultValues("ingress-controller")
 	if errVal != nil {

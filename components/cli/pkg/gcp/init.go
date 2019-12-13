@@ -66,6 +66,7 @@ type Gcp struct {
 	storageClient *storage.Client
 	bucketName    string
 	SqlCredential SqlServiceCredential
+	SqlHostName string
 }
 
 // NewGcp returns a Gcp instance.

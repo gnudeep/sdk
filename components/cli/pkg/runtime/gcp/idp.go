@@ -68,22 +68,14 @@ func buildIdpYamlPaths() []string {
 
 func CreateIdp(celleryValues runtime.CelleryRuntimeVals) error {
 	log.Printf("Deploying cellery runtime using cellery-runtime chart")
-	chartName := "cellery-runtime"
-	celleryVals, errCelVals := util.GetHelmChartDefaultValues(chartName)
-	if errCelVals != nil {
-		log.Fatalf("error: %v", errCelVals)
-	}
-	err := yaml.Unmarshal([]byte(celleryVals), &celleryValues)
-	if err != nil {
-		log.Fatalf("error: %v", err)
-	}
+
 	celleryValues.Idp.Enabled = true
 
 	celleryYamls, errcon := yaml.Marshal(&celleryValues)
 	if errcon != nil {
 		log.Fatalf("error: %v", errcon)
 	}
-	//log.Printf(string(celleryYamls))
+	log.Printf(string(celleryYamls))
 	if err := util.ApplyHelmChartWithCustomValues("cellery-runtime", "cellery-system",
 		"apply", string(celleryYamls)); err != nil {
 		fmt.Errorf("error installing ingress controller: %v", err)

@@ -364,6 +364,13 @@ func CopyK8sArtifacts(outPath string) {
 	CopyDir(filepath.Join(CelleryInstallationDir(), constants.K8sArtifacts), k8sArtifactsDir)
 }
 
+func CopyHelmArtifacts(outPath string) {
+	helmChartDir := filepath.Join(outPath, constants.HelmCarts)
+	RemoveDir(helmChartDir)
+	CreateDir(helmChartDir)
+	CopyDir(filepath.Join(CelleryInstallationDir(), constants.HelmCarts), helmChartDir)
+}
+
 func CreateCelleryDirStructure() {
 	celleryHome := filepath.Join(UserHomeDir(), constants.CelleryHome)
 	CreateDir(celleryHome)
