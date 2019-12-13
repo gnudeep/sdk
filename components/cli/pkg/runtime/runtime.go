@@ -374,7 +374,8 @@ func (runtime *CelleryRuntime) Create() error {
 		log.Fatalf("error: %v", errcon)
 	}
 	//log.Printf(string(celleryYamls))
-	if err := util.ApplyHelmChartWithCustomValues("cellery-runtime", "cellery-system", "apply", string(celleryYamls)); err != nil {
+	if err := util.ApplyHelmChartWithCustomValues("cellery-runtime", "cellery-system",
+		"apply", string(celleryYamls)); err != nil {
 		return fmt.Errorf("error installing ingress controller: %v", err)
 	}
 	spinner.Stop(true)

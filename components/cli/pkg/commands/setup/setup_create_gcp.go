@@ -169,6 +169,10 @@ func createController() error {
 	if err := util.ApplyHelmChartWithDefaultValues("knative-crd", "default"); err != nil {
 		return fmt.Errorf("error installing knative crds: %v", err)
 	}
+	// Setup istio-system namespace
+	if err := util.CreateNameSpace("istio-system"); err != nil {
+		return fmt.Errorf("error creating cellery namespace, %v", err)
+	}
 	return nil
 }
 
@@ -198,12 +202,22 @@ func deployMinimalCelleryRuntime(platform *gcpPlatform.Gcp) error {
 
 func deployCompleteCelleryRuntime(platform *gcpPlatform.Gcp) {
 	celleryValues := runtime.CelleryRuntimeVals{}
+	chartName := "cellery-runtime"
+	celleryVals, errCelVals := util.GetHelmChartDefaultValues(chartName)
+	if errCelVals != nil {
+		log.Fatalf("error: %v", errCelVals)
+	}
+	err := yaml.Unmarshal([]byte(celleryVals), &celleryValues)
+	if err != nil {
+		log.Fatalf("error: %v", err)
+	}
+	celleryValues.Global.CelleryRuntime.Db.Hostname = platform.SqlHostName
 	celleryValues.Global.CelleryRuntime.Db.CarbonDb.Username = platform.SqlCredential.SqlUserName
 	celleryValues.Global.CelleryRuntime.Db.CarbonDb.Password = platform.SqlCredential.SqlPassword
 	errorDeployingCelleryRuntime := "Error deploying cellery runtime"
 
 	createController()
-	createAllDeploymentArtifacts()
+	//createAllDeploymentArtifacts()
 
 	//Create gateway deployment and the service
 	if err := gcp.AddApim(celleryValues); err != nil {

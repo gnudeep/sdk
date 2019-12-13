@@ -68,9 +68,8 @@ func buildIdpYamlPaths() []string {
 
 func CreateIdp(celleryValues runtime.CelleryRuntimeVals) error {
 	log.Printf("Deploying cellery runtime using cellery-runtime chart")
-
+	celleryValues.Controller.Enabled = true
 	celleryValues.Idp.Enabled = true
-
 	celleryYamls, errcon := yaml.Marshal(&celleryValues)
 	if errcon != nil {
 		log.Fatalf("error: %v", errcon)

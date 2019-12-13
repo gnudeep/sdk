@@ -72,13 +72,7 @@ func buildApimYamlPaths() []string {
 
 func AddApim(celleryValues runtime.CelleryRuntimeVals) error {
 	log.Printf("Deploying control plane API Manager")
-	celleryVals, errCelVals := util.GetHelmChartDefaultValues("cellery-runtime")
-	if errCelVals != nil {
-		err := yaml.Unmarshal([]byte(celleryVals), &celleryValues)
-		if err != nil {
-			log.Fatalf("error: %v", err)
-		}
-	}
+	celleryValues.Controller.Enabled = true
 	celleryValues.ApiManager.Enabled = true
 	celleryYamls, errcon := yaml.Marshal(&celleryValues)
 	if errcon != nil {
