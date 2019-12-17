@@ -27,7 +27,7 @@ import (
 	"cellery.io/cellery/components/cli/pkg/kubernetes"
 )
 
-func (runtime *CelleryRuntime) AddApim(isPersistentVolume bool, nfs Nfs) error {
+func (runtime *CelleryRuntime) AddApim(isPersistentVolume bool, nfs Nfs, db MysqlDb) error {
 	//for _, v := range buildApimYamlPaths(runtime.artifactsPath, isPersistentVolume) {
 	//	err := kubernetes.ApplyFileWithNamespace(v, "cellery-system")
 	//	if err != nil {
@@ -36,13 +36,18 @@ func (runtime *CelleryRuntime) AddApim(isPersistentVolume bool, nfs Nfs) error {
 	//}
 	runtime.UnmarshalHelmValues("cellery-runtime")
 	runtime.celleryRuntimeVals.ApiManager.Enabled = true
+	if runtime.IsGcpRuntime() {
+		runtime.celleryRuntimeVals.Global.CelleryRuntime.Db.Hostname = db.DbHostName
+		runtime.celleryRuntimeVals.Global.CelleryRuntime.Db.CarbonDb.Username = db.DbUserName
+		runtime.celleryRuntimeVals.Global.CelleryRuntime.Db.CarbonDb.Password = db.DbPassword
+	}
 	if isPersistentVolume {
 		runtime.celleryRuntimeVals.ApiManager.Persistence.Enabled = true
 		runtime.celleryRuntimeVals.ApiManager.Persistence.Media = "local-filesystem"
 		if nfs.NfsServerIp != "" {
 			runtime.celleryRuntimeVals.ApiManager.Persistence.Media = "nfs"
 			runtime.celleryRuntimeVals.ApiManager.Persistence.NfsServerIp = nfs.NfsServerIp
-			runtime.celleryRuntimeVals.ApiManager.Persistence.NfsServerIp = nfs.FileShare
+			runtime.celleryRuntimeVals.ApiManager.Persistence.SharedLocation = nfs.FileShare
 		}
 	} else {
 		runtime.celleryRuntimeVals.ApiManager.Persistence.Enabled = false

@@ -159,6 +159,7 @@ copyBuildDirectories() {
     mkdir -p ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery/repo
 
     cp -R $RESOURCE_LOCATION/k8s-* ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery
+    cp -R $RESOURCE_LOCATION/helm-charts ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery
     cp -R $RESOURCE_LOCATION/telepresence-* ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery
 
     mkdir -p ${TARGET_DIRECTORY}/${INSTALLATION_DIRECTORY}/usr/share/cellery/b7a-libs/balo_cache/celleryio/cellery/${CELLERY_VERSION_NUM}

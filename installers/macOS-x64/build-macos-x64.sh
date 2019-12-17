@@ -173,6 +173,7 @@ copyBuildDirectory() {
     mkdir -p ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/repo
 
     cp -R $RESOURCE_LOCATION/k8s-* ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/
+    cp -R $RESOURCE_LOCATION/helm-charts ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/
     cp -R $RESOURCE_LOCATION/telepresence-* ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/
 
     mkdir -p ${TARGET_DIRECTORY}/darwinpkg/Library/Cellery/b7a-libs/balo_cache/celleryio/cellery/${CELLERY_VERSION_NUM}

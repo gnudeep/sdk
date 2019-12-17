@@ -220,7 +220,7 @@ func RunSetupCreateCelleryRuntime(cli cli.Cli, complete bool, isPersistentVolume
 	if complete {
 		if err = cli.ExecuteTask("Creating apim deployment", "Failed to create apim deployment",
 			"", func() error {
-				return cli.Runtime().AddApim(isPersistentVolume, nfs)
+				return cli.Runtime().AddApim(isPersistentVolume, nfs, db)
 			}); err != nil {
 			return fmt.Errorf("error creating apim deployment: %v", err)
 		}

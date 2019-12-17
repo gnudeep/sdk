@@ -109,6 +109,19 @@ copy-k8s-artefacts:
 	mkdir -p k8s-artefacts/observability/node-server/config; \
 	unzip $(OBSERVABILITY_PORTAL_ARTIFACT) && cp config/* k8s-artefacts/observability/node-server/config/
 
+.PHONY: copy-helm-artefacts
+copy-helm-artefacts:
+	cd ${PROJECT_ROOT}/installers; \
+	mkdir -p build-artifacts && cd build-artifacts;\
+	curl -LO --retry 5 $(DISTRIBUTION_ARTIFACTS); \
+	unzip -o $(DISTRIBUTION_ARCHIVE_VERSION).zip && mv cellery-distribution-$(DISTRIBUTION_VERSION)/installer/helm helm-charts; \
+	curl --retry 5 $(OBSERVABILITY_ARTIFACTS_PATH)/$(OBSERVABILITY_ARTIFACTS) --output $(OBSERVABILITY_ARTIFACTS); \
+	unzip -o $(OBSERVABILITY_ARTIFACTS); \
+	unzip -o $(OBSERVABILITY_SIDDHI_ARTIFACT) -d helm-charts/cellery-runtime/charts/sp/confs/siddhi; \
+	mkdir -p helm-charts/cellery-runtime/charts/portal/confs/; \
+	unzip -o $(OBSERVABILITY_PORTAL_ARTIFACT) && cp config/* helm-charts/cellery-runtime/charts/portal/confs/
+	#rm helm-charts/install.sh; rm helm-charts/cleanup.sh; rm helm-charts/helm-service-account.yaml;
+
 .PHONY: copy-telepresence-artefacts
 copy-telepresence-artefacts:
 	cd ${PROJECT_ROOT}/installers; \
@@ -117,18 +130,20 @@ copy-telepresence-artefacts:
     tar -xvf $(TELEPRESENCE_VERSION).tar.gz
 
 .PHONY: build-ubuntu-installer
-build-ubuntu-installer: cleanup-installers copy-k8s-artefacts copy-telepresence-artefacts
+build-ubuntu-installer: cleanup-installers copy-k8s-artefacts copy-helm-artefacts copy-telepresence-artefacts
 	cd ${PROJECT_ROOT}/installers/ubuntu-x64; \
 	mkdir -p files; \
 	mv ../build-artifacts/k8s-artefacts files/; \
+	mv ../build-artifacts/helm-charts files/; \
 	mv ../build-artifacts/$(TELEPRESENCE_VERSION) files/; \
 	bash build-ubuntu-x64.sh $(INSTALLER_VERSION) $(VERSION) $(BALLERINA_VERSION)
 
 .PHONY: build-mac-installer
-build-mac-installer: cleanup-installers copy-k8s-artefacts copy-telepresence-artefacts
+build-mac-installer: cleanup-installers copy-k8s-artefacts copy-helm-artefacts copy-telepresence-artefacts
 	cd ${PROJECT_ROOT}/installers/macOS-x64; \
 	mkdir -p files; \
 	mv ../build-artifacts/k8s-artefacts files/; \
+	mv ../build-artifacts/helm-charts files/; \
 	mv ../build-artifacts/$(TELEPRESENCE_VERSION) files/; \
 	bash build-macos-x64.sh $(INSTALLER_VERSION) $(VERSION) $(BALLERINA_VERSION); \
 	cd target/darwinpkg/Library/Cellery && zip -r cellery-$(VERSION).zip .

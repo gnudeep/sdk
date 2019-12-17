@@ -37,6 +37,8 @@ func createEnvironment(cli cli.Cli) error {
 	artifactsPath := filepath.Join(cli.FileSystem().UserHome(), constants.CelleryHome, constants.K8sArtifacts)
 	os.RemoveAll(artifactsPath)
 	util.CopyDir(filepath.Join(cli.FileSystem().CelleryInstallationDir(), constants.K8sArtifacts), artifactsPath)
+	helmChartsPath := filepath.Join(cli.FileSystem().UserHome(), constants.CelleryHome, constants.HelmCarts)
+	util.CopyDir(filepath.Join(cli.FileSystem().CelleryInstallationDir(), constants.HelmCarts), helmChartsPath)
 	cli.Runtime().SetArtifactsPath(artifactsPath)
 	bold := color.New(color.Bold).SprintFunc()
 	cellTemplate := &promptui.SelectTemplates{
