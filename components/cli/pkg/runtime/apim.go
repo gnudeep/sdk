@@ -19,6 +19,7 @@
 package runtime
 
 import (
+	"cellery.io/cellery/components/cli/pkg/util"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -26,12 +27,31 @@ import (
 	"cellery.io/cellery/components/cli/pkg/kubernetes"
 )
 
-func (runtime *CelleryRuntime) AddApim(isPersistentVolume bool) error {
-	for _, v := range buildApimYamlPaths(runtime.artifactsPath, isPersistentVolume) {
-		err := kubernetes.ApplyFileWithNamespace(v, "cellery-system")
-		if err != nil {
-			return err
+func (runtime *CelleryRuntime) AddApim(isPersistentVolume bool, nfs Nfs) error {
+	//for _, v := range buildApimYamlPaths(runtime.artifactsPath, isPersistentVolume) {
+	//	err := kubernetes.ApplyFileWithNamespace(v, "cellery-system")
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
+	runtime.UnmarshalHelmValues("cellery-runtime")
+	runtime.celleryRuntimeVals.ApiManager.Enabled = true
+	if isPersistentVolume {
+		runtime.celleryRuntimeVals.ApiManager.Persistence.Enabled = true
+		runtime.celleryRuntimeVals.ApiManager.Persistence.Media = "local-filesystem"
+		if nfs.NfsServerIp != "" {
+			runtime.celleryRuntimeVals.ApiManager.Persistence.Media = "nfs"
+			runtime.celleryRuntimeVals.ApiManager.Persistence.NfsServerIp = nfs.NfsServerIp
+			runtime.celleryRuntimeVals.ApiManager.Persistence.NfsServerIp = nfs.FileShare
 		}
+	} else {
+		runtime.celleryRuntimeVals.ApiManager.Persistence.Enabled = false
+		runtime.celleryRuntimeVals.ApiManager.Persistence.Media = "volatile"
+	}
+	runtime.MarshalHelmValues("cellery-runtime")
+	if err := util.ApplyHelmChartWithCustomValues("cellery-runtime", "cellery-system",
+		"apply", runtime.celleryRuntimeYaml); err != nil {
+		return err
 	}
 	return nil
 }
@@ -42,6 +62,17 @@ func deleteApim(artifactsPath string) error {
 		if err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func (runtime *CelleryRuntime) DeleteApim() error {
+	runtime.UnmarshalHelmValues("cellery-runtime")
+	runtime.celleryRuntimeVals.ApiManager.Enabled = true
+	runtime.MarshalHelmValues("cellery-runtime")
+	if err := util.ApplyHelmChartWithCustomValues("cellery-runtime", "cellery-system",
+		"delete", runtime.celleryRuntimeYaml); err != nil {
+		return err
 	}
 	return nil
 }

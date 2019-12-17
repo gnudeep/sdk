@@ -19,16 +19,22 @@
 package runtime
 
 import (
-	"cellery.io/cellery/components/cli/pkg/kubernetes"
 	"cellery.io/cellery/components/cli/pkg/util"
 )
 
 func (runtime *CelleryRuntime) InstallController() error {
-	for _, v := range buildControllerYamlPaths(runtime.artifactsPath) {
-		err := kubernetes.ApplyFile(v)
-		if err != nil {
-			return err
-		}
+	//for _, v := range buildControllerYamlPaths(runtime.artifactsPath) {
+	//	err := kubernetes.ApplyFile(v)
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
+	runtime.UnmarshalHelmValues("cellery-runtime")
+	runtime.celleryRuntimeVals.Controller.Enabled = true
+	runtime.MarshalHelmValues("cellery-runtime")
+	if err := util.ApplyHelmChartWithCustomValues("cellery-runtime", "cellery-system",
+		"apply", runtime.celleryRuntimeYaml); err != nil {
+		return err
 	}
 	return nil
 }

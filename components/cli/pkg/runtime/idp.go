@@ -19,17 +19,30 @@
 package runtime
 
 import (
+	"cellery.io/cellery/components/cli/pkg/util"
 	"path/filepath"
 
 	"cellery.io/cellery/components/cli/pkg/kubernetes"
 )
 
-func (runtime *CelleryRuntime) AddIdp() error {
-	for _, v := range buildIdpYamlPaths(runtime.artifactsPath) {
-		err := kubernetes.ApplyFileWithNamespace(v, "cellery-system")
-		if err != nil {
-			return err
-		}
+func (runtime *CelleryRuntime) AddIdp(db MysqlDb) error {
+	//for _, v := range buildIdpYamlPaths(runtime.artifactsPath) {
+	//	err := kubernetes.ApplyFileWithNamespace(v, "cellery-system")
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
+	runtime.UnmarshalHelmValues("cellery-runtime")
+	runtime.celleryRuntimeVals.Idp.Enabled = true
+	if runtime.IsGcpRuntime() {
+		runtime.celleryRuntimeVals.Global.CelleryRuntime.Db.Hostname = db.DbHostName
+		runtime.celleryRuntimeVals.Global.CelleryRuntime.Db.CarbonDb.Username = db.DbUserName
+		runtime.celleryRuntimeVals.Global.CelleryRuntime.Db.CarbonDb.Password = db.DbPassword
+	}
+	runtime.MarshalHelmValues("cellery-runtime")
+	if err := util.ApplyHelmChartWithCustomValues("cellery-runtime", "cellery-system",
+		"apply", runtime.celleryRuntimeYaml); err != nil {
+		return err
 	}
 	return nil
 }
@@ -40,6 +53,17 @@ func deleteIdp(artifactsPath string) error {
 		if err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func (runtime *CelleryRuntime) DeleteIdp() error {
+	runtime.UnmarshalHelmValues("cellery-runtime")
+	runtime.celleryRuntimeVals.Idp.Enabled = true
+	runtime.MarshalHelmValues("cellery-runtime")
+	if err := util.ApplyHelmChartWithCustomValues("cellery-runtime", "cellery-system",
+		"delete", runtime.celleryRuntimeYaml); err != nil {
+		return err
 	}
 	return nil
 }

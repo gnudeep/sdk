@@ -26,6 +26,38 @@
   revision = "82da6802f65f1ac7963cfc3b7c62ae12dab8ee5d"
 
 [[projects]]
+  digest = "1:9f3b30d9f8e0d7040f729b82dcbc8f0dead820a133b3147ce355fc451f32d761"
+  name = "github.com/BurntSushi/toml"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "3012a1dbe2e4bd1391d42b32f0577cb7bbc7f005"
+  version = "v0.3.1"
+
+[[projects]]
+  digest = "1:3b10c6fd33854dc41de2cf78b7bae105da94c2789b6fa5b9ac9e593ea43484ac"
+  name = "github.com/Masterminds/goutils"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "41ac8693c5c10a92ea1ff5ac3a7f95646f6123b0"
+  version = "v1.1.0"
+
+[[projects]]
+  digest = "1:a5f0485ed2aad9b9c6a730815d1f2bc92b0acc126d7ee8e36c1a51882fc284f5"
+  name = "github.com/Masterminds/semver"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "25911d36c978be5eb3e81847734874fd4e1dc6c7"
+  version = "v3.0.2"
+
+[[projects]]
+  digest = "1:b565deb585c50ab8e94fe5d6c9903f1495970b97814803e4ab0e70c0a9c87a30"
+  name = "github.com/Masterminds/sprig"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "e4c0945838d570720d876a6ad9b4568ed32317b4"
+  version = "v2.22.0"
+
+[[projects]]
   branch = "master"
   digest = "1:d73d422b7f34d8e930d6d9c3ae6ce5c8f4a2c77e1ea43f7f127a5cd084e32ccb"
   name = "github.com/aulanov/go.dbus"
@@ -34,12 +66,28 @@
   revision = "25c3068a42a0b50b877953fb249dbcffc6bd1bca"
 
 [[projects]]
+  digest = "1:adca550fe1f92bdd68d7876290db30c1eec2fd51a2e25004f3979f36ca876130"
+  name = "github.com/cellery-io/sdk"
+  packages = ["components/cli/pkg/constants"]
+  pruneopts = "UT"
+  revision = "a4576f4207f8fe73ad174b1810dabd3dcd7bf47b"
+  version = "v0.5.0"
+
+[[projects]]
   branch = "master"
   digest = "1:454adc7f974228ff789428b6dc098638c57a64aa0718f0bd61e53d3cd39d7a75"
   name = "github.com/chzyer/readline"
   packages = ["."]
   pruneopts = "UT"
   revision = "2972be24d48e78746da79ba8e24e8b488c9880de"
+
+[[projects]]
+  digest = "1:ec66ad050342a3573ed2f5a4337d51b4c6d5d2a717cc6c9ecf86b081235a5759"
+  name = "github.com/cyphar/filepath-securejoin"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "a261ee33d7a517f054effbf451841abaafe3e0fd"
+  version = "v0.2.2"
 
 [[projects]]
   digest = "1:586992e81213a853bfe5c102709c0c92020d21b386907ceae783f13bbe899ad7"
@@ -123,6 +171,23 @@
   version = "v1.0.0"
 
 [[projects]]
+  digest = "1:9ae31ce33b4bab257668963e844d98765b44160be4ee98cafc44637a213e530d"
+  name = "github.com/gobwas/glob"
+  packages = [
+    ".",
+    "compiler",
+    "match",
+    "syntax",
+    "syntax/ast",
+    "syntax/lexer",
+    "util/runes",
+    "util/strings",
+  ]
+  pruneopts = "UT"
+  revision = "5ccd90ef52e1e632236f7326478d4faa74f99438"
+  version = "v0.2.3"
+
+[[projects]]
   digest = "1:b3d20bcdedab2050e6bc58e52f4fdc46f710b4c74e1a1ecee262ebec1aee7b6e"
   name = "github.com/godbus/dbus"
   packages = ["."]
@@ -158,6 +223,14 @@
   pruneopts = "UT"
   revision = "2d0692c2e9617365a95b295612ac0d4415ba4627"
   version = "v0.3.1"
+
+[[projects]]
+  digest = "1:582b704bebaa06b48c29b0cec224a6058a09c86883aaddabde889cd1a5f73e1b"
+  name = "github.com/google/uuid"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "0cd6bf5da1e1c83f8b45653022c74f71af0538a4"
+  version = "v1.1.1"
 
 [[projects]]
   digest = "1:856bd1e35f6da8ce5671a5df09d0e89bf01e9b74b3dabb6d097d39b3813801e1"
@@ -198,6 +271,22 @@
   pruneopts = "UT"
   revision = "ac23dc3fea5d1a983c43f6a0f6e2c13f0195d8bd"
   version = "v1.2.0"
+
+[[projects]]
+  digest = "1:7e9014f41c8285f91b8f6170a30f633532c8d095b4ead42024e1f460c0ac497d"
+  name = "github.com/huandu/xstrings"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "874a673206bf7a5c86d29876dfeaccca0922ab62"
+  version = "v1.2.1"
+
+[[projects]]
+  digest = "1:78d28d5b84a26159c67ea51996a230da4bc07cac648adaae1dfb5fc0ec8e40d3"
+  name = "github.com/imdario/mergo"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "1afb36080aec31e0d1528973ebe6721b191b0369"
+  version = "v0.3.8"
 
 [[projects]]
   digest = "1:870d441fe217b8e689d7949fef6e43efbc787e50f200cb1e70dbca9204a1d6be"
@@ -287,12 +376,28 @@
   version = "v0.0.3"
 
 [[projects]]
+  digest = "1:09ca328575f38b80969ccf857f6d7302f2ce09d53778ea7aaba526cfd2cec739"
+  name = "github.com/mitchellh/copystructure"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "9a1b6f44e8da0e0e374624fb0a825a231b00c537"
+  version = "v1.0.0"
+
+[[projects]]
   digest = "1:5d231480e1c64a726869bc4142d270184c419749d34f167646baa21008eb0a79"
   name = "github.com/mitchellh/go-homedir"
   packages = ["."]
   pruneopts = "UT"
   revision = "af06845cf3004701891bf4fdb884bfe4920b3727"
   version = "v1.1.0"
+
+[[projects]]
+  digest = "1:2a7e6f8bebdca6bd8bc359c37f01ae1c4ea4f8481eaabf93b1ae4863f15b72c7"
+  name = "github.com/mitchellh/reflectwalk"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "3e2c75dfad4fbf904b58782a80fd595c760ad185"
+  version = "v1.0.1"
 
 [[projects]]
   branch = "master"
@@ -336,6 +441,14 @@
   pruneopts = "UT"
   revision = "f8fb5795b5d713c41dab6771ffe1fdfdfd0c3285"
   version = "1.1.1"
+
+[[projects]]
+  digest = "1:cf31692c14422fa27c83a05292eb5cbe0fb2775972e8f1f8446a71549bd8980b"
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "ba968bfe8b2f7e042a574c888954fccecfa385b4"
+  version = "v0.8.1"
 
 [[projects]]
   digest = "1:87c2e02fb01c27060ccc5ba7c5a407cc91147726f8f40b70cceeedbc52b1f3a8"
@@ -394,9 +507,13 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:fde12c4da6237363bf36b81b59aa36a43d28061167ec4acb0d41fc49464e28b9"
+  digest = "1:8a7e82de4ca048900402d929e103511135f9bcff17f5dea2c89911c2c718ed4f"
   name = "golang.org/x/crypto"
-  packages = ["ssh/terminal"]
+  packages = [
+    "pbkdf2",
+    "scrypt",
+    "ssh/terminal",
+  ]
   pruneopts = "UT"
   revision = "193df9c0f06f8bb35fba505183eaf0acc0136505"
 
@@ -567,12 +684,41 @@
   revision = "51d6538a90f86fe93ac480b35f37b2be17fef232"
   version = "v2.2.2"
 
+[[projects]]
+  digest = "1:0e8d6e7db54dd63de1caa7e00306a9d44c658287cf59fba915218a69e39f5de1"
+  name = "k8s.io/apimachinery"
+  packages = ["pkg/version"]
+  pruneopts = "UT"
+  revision = "79c2a76c473a20cdc4ce59cae4b72529b5d9d16b"
+  version = "v0.17.0"
+
+[[projects]]
+  digest = "1:09bb00f388c911a5c9592bfcf134582eeaaa960445a995cb8c9ac9eb1594bd85"
+  name = "k8s.io/helm"
+  packages = [
+    "pkg/chartutil",
+    "pkg/engine",
+    "pkg/ignore",
+    "pkg/manifest",
+    "pkg/proto/hapi/chart",
+    "pkg/proto/hapi/release",
+    "pkg/proto/hapi/version",
+    "pkg/releaseutil",
+    "pkg/renderutil",
+    "pkg/sympath",
+    "pkg/version",
+  ]
+  pruneopts = "UT"
+  revision = "bbdfe5e7803a12bbdf97e94cd847859890cf4050"
+  version = "v2.16.1"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
     "cloud.google.com/go/storage",
     "github.com/99designs/keyring",
+    "github.com/cellery-io/sdk/components/cli/pkg/constants",
     "github.com/dgrijalva/jwt-go",
     "github.com/docker/distribution/manifest",
     "github.com/docker/distribution/manifest/schema1",
@@ -590,6 +736,7 @@
     "github.com/olekukonko/tablewriter",
     "github.com/opencontainers/go-digest",
     "github.com/oxequa/interact",
+    "github.com/pkg/errors",
     "github.com/spf13/cobra",
     "github.com/tj/go-spin",
     "golang.org/x/crypto/ssh/terminal",
@@ -597,6 +744,10 @@
     "google.golang.org/api/container/v1",
     "google.golang.org/api/file/v1",
     "google.golang.org/api/sqladmin/v1beta4",
+    "k8s.io/helm/pkg/chartutil",
+    "k8s.io/helm/pkg/manifest",
+    "k8s.io/helm/pkg/proto/hapi/chart",
+    "k8s.io/helm/pkg/renderutil",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

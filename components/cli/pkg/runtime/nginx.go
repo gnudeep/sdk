@@ -19,8 +19,10 @@
 package runtime
 
 import (
+	"cellery.io/cellery/components/cli/pkg/util"
 	"encoding/json"
 	"fmt"
+	"log"
 	"path/filepath"
 
 	"github.com/mattbaird/jsonpatch"
@@ -28,12 +30,25 @@ import (
 	"cellery.io/cellery/components/cli/pkg/kubernetes"
 )
 
-func (runtime *CelleryRuntime) InstallIngressNginx(isLoadBalancerIngressMode bool) error {
-	for _, file := range buildNginxYamlPaths(runtime.artifactsPath, isLoadBalancerIngressMode) {
-		err := kubernetes.ApplyFile(file)
-		if err != nil {
-			return err
-		}
+func (runtime *CelleryRuntime) InstallIngressNginx(isLoadBalancerIngressMode bool, nodePortIpAddress string) error {
+	//for _, file := range buildNginxYamlPaths(runtime.artifactsPath, isLoadBalancerIngressMode) {
+	//	err := kubernetes.ApplyFile(file)
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
+	runtime.UnmarshalHelmValues("ingress-controller")
+	if isLoadBalancerIngressMode {
+		runtime.ingressControllerVals.NginxIngress.Controller.Service.Type = "LoadBalancer"
+	} else {
+		runtime.ingressControllerVals.NginxIngress.Controller.Service.Type = "NodePort"
+		runtime.ingressControllerVals.NginxIngress.Controller.Service.ExternalIPs = []string{nodePortIpAddress}
+	}
+	runtime.MarshalHelmValues("ingress-controller")
+	log.Print(runtime.ingressControllerVals)
+	if err := util.ApplyHelmChartWithCustomValues("ingress-controller", "ingress-nginx",
+		"apply", runtime.ingressControllerYamls); err != nil {
+		return fmt.Errorf("error installing ingress controller: %v", err)
 	}
 	return nil
 }

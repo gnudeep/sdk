@@ -19,28 +19,35 @@
 package runtime
 
 import (
+	"cellery.io/cellery/components/cli/pkg/util"
+	"log"
 	"path/filepath"
-
-	"cellery.io/cellery/components/cli/pkg/kubernetes"
 )
 
 func (runtime *CelleryRuntime) ApplyIstioCrds() error {
-	for _, v := range buildIstioCrdsYamlPaths(runtime.artifactsPath) {
-		err := kubernetes.ApplyFile(v)
-		if err != nil {
-			return err
-		}
+	//for _, v := range buildIstioCrdsYamlPaths(runtime.artifactsPath) {
+	//	err := kubernetes.ApplyFile(v)
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
+	log.Printf("Deploying istio CRDs using istio-init chart")
+	if err := util.ApplyHelmChartWithDefaultValues("istio-init", "default"); err != nil {
+		return err
 	}
 	return nil
-
 }
 
 func (runtime *CelleryRuntime) InstallIstio() error {
-	for _, v := range buildIstioYamlPaths(runtime.artifactsPath) {
-		err := kubernetes.ApplyFile(v)
-		if err != nil {
-			return err
-		}
+	//for _, v := range buildIstioYamlPaths(runtime.artifactsPath) {
+	//	err := kubernetes.ApplyFile(v)
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
+	log.Printf("Deploying Istio using istio chart")
+	if err := util.ApplyHelmChartWithDefaultValues("istio", "istio-system"); err != nil {
+		return err
 	}
 	return nil
 }

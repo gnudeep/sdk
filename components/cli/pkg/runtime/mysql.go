@@ -26,29 +26,45 @@ import (
 )
 
 func (runtime *CelleryRuntime) InstallMysql(isPersistentVolume bool) error {
-	base := buildArtifactsPath(Mysql, runtime.artifactsPath)
-	for _, confMap := range buildMysqlConfigMaps(runtime.artifactsPath) {
-		if err := kubernetes.CreateConfigMapWithNamespace(confMap.Name, confMap.Path, "cellery-system"); err != nil {
-			return err
-		}
-	}
+	//base := buildArtifactsPath(Mysql, runtime.artifactsPath)
+	//for _, confMap := range buildMysqlConfigMaps(runtime.artifactsPath) {
+	//	if err := kubernetes.CreateConfigMapWithNamespace(confMap.Name, confMap.Path, "cellery-system"); err != nil {
+	//		return err
+	//	}
+	//}
+	runtime.UnmarshalHelmValues("cellery-runtime")
+	runtime.celleryRuntimeVals.Mysql.Enabled = true
+
+	//if isPersistentVolume {
+	//	for _, persistentVolumeYaml := range buildPersistentVolumePaths(runtime.artifactsPath) {
+	//		if err := kubernetes.ApplyFileWithNamespace(persistentVolumeYaml, "cellery-system"); err != nil {
+	//			return err
+	//		}
+	//	}
+	//}
+	//if err := kubernetes.ApplyFileWithNamespace(buildMysqlDeploymentPath(runtime.artifactsPath, isPersistentVolume), "cellery-system"); err != nil {
+	//	return err
+	//}
 	if isPersistentVolume {
-		for _, persistentVolumeYaml := range buildPersistentVolumePaths(runtime.artifactsPath) {
-			if err := kubernetes.ApplyFileWithNamespace(persistentVolumeYaml, "cellery-system"); err != nil {
-				return err
-			}
-		}
+		runtime.celleryRuntimeVals.Mysql.Persistence.Enabled = true
+		runtime.celleryRuntimeVals.Mysql.Persistence.StorageClass = "local-storage"
+		runtime.celleryRuntimeVals.Mysql.LocalStorage.Enabled = true
+	} else {
+		runtime.celleryRuntimeVals.Mysql.Persistence.Enabled = false
 	}
-	if err := kubernetes.ApplyFileWithNamespace(buildMysqlDeploymentPath(runtime.artifactsPath, isPersistentVolume), "cellery-system"); err != nil {
+	runtime.MarshalHelmValues("cellery-runtime")
+	if err := util.ApplyHelmChartWithCustomValues("cellery-runtime", "cellery-system",
+		"apply", runtime.celleryRuntimeYaml); err != nil {
 		return err
 	}
+
 	if err := kubernetes.WaitForDeployment("available", 900,
-		"wso2apim-with-analytics-mysql-deployment", "cellery-system"); err != nil {
+		"cellery-runtime-mysql", "cellery-system"); err != nil {
 		return err
 	}
-	if err := kubernetes.ApplyFileWithNamespace(filepath.Join(base, "mysql-service.yaml"), "cellery-system"); err != nil {
-		return err
-	}
+	//if err := kubernetes.ApplyFileWithNamespace(filepath.Join(base, "mysql-service.yaml"), "cellery-system"); err != nil {
+	//	return err
+	//}
 	return nil
 }
 

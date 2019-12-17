@@ -132,10 +132,10 @@ func RunSetupCleanupCelleryRuntime(cli cli.Cli, removeKnative, removeIstio, remo
 
 		if err := cli.ExecuteTask("Removing persistent volume", "Failed to remove persistent volume",
 			"", func() error {
-				if err := cli.KubeCli().DeletePersistedVolume("wso2apim-local-pv"); err != nil {
+				if err := cli.KubeCli().DeletePersistedVolume("wso2apim-shared-deployment-pv"); err != nil {
 					return fmt.Errorf("failed to remove persisted volumes-apim, %v", err)
 				}
-				if err := cli.KubeCli().DeletePersistedVolume("wso2apim-with-analytics-mysql-pv"); err != nil {
+				if err := cli.KubeCli().DeletePersistedVolume("cellery-system-mysql-pv"); err != nil {
 					return fmt.Errorf("failed to remove persisted volumes-mysql, %v", err)
 				}
 				return nil

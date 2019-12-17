@@ -20,6 +20,7 @@
 package runtime
 
 import (
+	"cellery.io/cellery/components/cli/pkg/util"
 	"fmt"
 	"strings"
 
@@ -70,4 +71,20 @@ func buildHPAYamlPaths(artifactsPath string) []string {
 	return []string{
 		base,
 	}
+}
+
+func (runtime *CelleryRuntime) InstallHPA() error {
+	if err := util.ApplyHelmChartWithCustomValues("metrics-server", "kube-system",
+		"apply", runtime.celleryRuntimeYaml); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (runtime *CelleryRuntime) DeleteHPA() error {
+	if err := util.ApplyHelmChartWithCustomValues("metrics-server", "kube-system",
+		"delete", runtime.celleryRuntimeYaml); err != nil {
+		return err
+	}
+	return nil
 }

@@ -19,7 +19,9 @@
 package runtime
 
 import (
+	"cellery.io/cellery/components/cli/pkg/util"
 	"fmt"
+	"log"
 	"path/filepath"
 	"strings"
 
@@ -27,11 +29,23 @@ import (
 )
 
 func (runtime *CelleryRuntime) AddObservability() error {
-	for _, v := range buildObservabilityYamlPaths(runtime.artifactsPath) {
-		err := kubernetes.ApplyFile(v)
-		if err != nil {
-			return err
-		}
+	//for _, v := range buildObservabilityYamlPaths(runtime.artifactsPath) {
+	//	err := kubernetes.ApplyFile(v)
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
+	runtime.UnmarshalHelmValues("cellery-runtime")
+	runtime.celleryRuntimeVals.ObservabilityPortal.Enabled = true
+	runtime.celleryRuntimeVals.ObservabilityAgent.Enabled = true
+	runtime.celleryRuntimeVals.Prometheus.Enabled = true
+	runtime.celleryRuntimeVals.Sp.Enabled = true
+	runtime.celleryRuntimeVals.Grafana.Enabled = true
+	runtime.MarshalHelmValues("cellery-runtime")
+	log.Printf(runtime.celleryRuntimeYaml)
+	if err := util.ApplyHelmChartWithCustomValues("cellery-runtime", "cellery-system",
+		"apply", runtime.celleryRuntimeYaml); err != nil {
+		return err
 	}
 	return nil
 }
@@ -45,6 +59,29 @@ func deleteObservability(artifactsPath string) error {
 	}
 	return nil
 }
+
+func (runtime *CelleryRuntime) DeleteObservability() error {
+	//for _, v := range buildObservabilityYamlPaths(runtime.artifactsPath) {
+	//	err := kubernetes.ApplyFile(v)
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
+	runtime.UnmarshalHelmValues("cellery-runtime")
+	runtime.celleryRuntimeVals.ObservabilityPortal.Enabled = true
+	runtime.celleryRuntimeVals.ObservabilityAgent.Enabled = true
+	runtime.celleryRuntimeVals.Prometheus.Enabled = true
+	runtime.celleryRuntimeVals.Sp.Enabled = true
+	runtime.celleryRuntimeVals.Grafana.Enabled = true
+	runtime.MarshalHelmValues("cellery-runtime")
+	log.Printf(runtime.celleryRuntimeYaml)
+	if err := util.ApplyHelmChartWithCustomValues("cellery-runtime", "cellery-system",
+		"delete", runtime.celleryRuntimeYaml); err != nil {
+		return err
+	}
+	return nil
+}
+
 func IsObservabilityEnabled() (bool, error) {
 	enabled := true
 	_, err := kubernetes.GetDeployment("cellery-system", "wso2sp-worker")

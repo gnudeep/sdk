@@ -21,6 +21,8 @@ package runtime
 import (
 	"encoding/json"
 	"fmt"
+	"gopkg.in/yaml.v2"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -54,6 +56,7 @@ type Runtime interface {
 	DeleteComponent(component SystemComponent) error
 	IsComponentEnabled(component SystemComponent) (bool, error)
 	CreateCelleryNameSpace() error
+	CreateNameSpace(namespace string) error
 	IsGcpRuntime() bool
 	CreatePersistentVolumeDirs() error
 	UpdateNfsServerDetails(ipAddress, fileShare string) error
@@ -61,26 +64,35 @@ type Runtime interface {
 	UpdateInitSql(dbUserName, dbPassword string) error
 	ApplyIstioCrds() error
 	InstallIstio() error
-	InstallIngressNginx(isLoadBalancerIngressMode bool) error
+	InstallIngressNginx(isLoadBalancerIngressMode bool, nodePortIpAddress string) error
 	ApplyKnativeCrds() error
 	InstallKnativeServing() error
 	InstallController() error
 	InstallMysql(isPersistentVolume bool) error
 	CreateConfigMaps() error
-	AddApim(isPersistentVolume bool) error
+	AddApim(isPersistentVolume bool, nfs Nfs) error
+	DeleteApim() error
 	AddObservability() error
-	AddIdp() error
+	AddIdp(db MysqlDb) error
+	DeleteIdp() error
 	UpdateNodePortIpAddress(nodePortIpAddress string) error
 	CreatePersistentVolume(hasNfs bool) error
 	IsHpaEnabled() (bool, error)
 	WaitFor(checkKnative, hpaEnabled bool) error
 	Validate() error
+	UnmarshalHelmValues(chartName string) error
+	MarshalHelmValues(chartName string) error
+	InstallHPA() error
 }
 
 type CelleryRuntime struct {
 	artifactsPath string
 	nfs           Nfs
 	db            MysqlDb
+	celleryRuntimeVals	CelleryRuntimeVals
+	celleryRuntimeYaml	string
+	ingressControllerVals	IngressController
+	ingressControllerYamls  string
 }
 
 // NewCelleryRuntime returns a CelleryRuntime instance.
@@ -125,7 +137,7 @@ func (runtime *CelleryRuntime) CreateConfigMaps() error {
 func (runtime *CelleryRuntime) AddComponent(component SystemComponent) error {
 	switch component {
 	case ApiManager:
-		return runtime.AddApim(false)
+		return runtime.AddApim(false, Nfs{})
 	case IdentityProvider:
 		return runtime.AddIdp()
 	case Observability:
@@ -133,7 +145,8 @@ func (runtime *CelleryRuntime) AddComponent(component SystemComponent) error {
 	case ScaleToZero:
 		return runtime.InstallKnativeServing()
 	case HPA:
-		return InstallHPA(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts))
+		//return InstallHPA(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts))
+		return runtime.InstallHPA()
 	default:
 		return fmt.Errorf("unknown system componenet %q", component)
 	}
@@ -142,15 +155,19 @@ func (runtime *CelleryRuntime) AddComponent(component SystemComponent) error {
 func (runtime *CelleryRuntime) DeleteComponent(component SystemComponent) error {
 	switch component {
 	case ApiManager:
-		return deleteApim(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts))
+		//return deleteApim(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts))
+		return runtime.DeleteApim()
 	case IdentityProvider:
-		return deleteIdp(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts))
+		//return deleteIdp(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts))
+		return runtime.DeleteIdp()
 	case Observability:
-		return deleteObservability(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts))
+		//return deleteObservability(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts))
+		return runtime.DeleteObservability()
 	case ScaleToZero:
 		return deleteKnative()
 	case HPA:
-		return deleteHpa(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts))
+		//return deleteHpa(filepath.Join(util.CelleryInstallationDir(), constants.K8sArtifacts))
+		return runtime.DeleteHPA()
 	default:
 		return fmt.Errorf("unknown system componenet %q", component)
 	}
@@ -337,4 +354,57 @@ func (runtime *CelleryRuntime) Validate() error {
 		return fmt.Errorf(errorMessage)
 	}
 	return nil
+}
+
+func (runtime *CelleryRuntime) UnmarshalHelmValues(chartName string) error {
+	defaultValues, err := util.GetHelmChartDefaultValues(chartName)
+	if err != nil {
+		log.Printf("Unmarshal error: %v", err)
+		return err
+	}
+	if chartName == "cellery-runtime" {
+		err = yaml.Unmarshal([]byte(defaultValues), &runtime.celleryRuntimeVals)
+		if err != nil {
+			log.Printf("Unmarshal error: %v", err)
+			return err
+		}
+	}else if chartName == "ingress-controller" {
+		err = yaml.Unmarshal([]byte(defaultValues), &runtime.ingressControllerVals)
+		if err != nil {
+			log.Printf("Unmarshal error: %v", err)
+			return err
+		}
+	}
+	return nil
+}
+
+func (runtime *CelleryRuntime) MarshalHelmValues(chartName string) error {
+	if chartName == "cellery-runtime" {
+		templateYamls, err := yaml.Marshal(&runtime.celleryRuntimeVals)
+		if err != nil {
+			log.Printf("Marshal error: %v", err)
+			return err
+		}
+		runtime.celleryRuntimeYaml = string(templateYamls)
+	} else if chartName == "ingress-controller" {
+		templateYamls, err := yaml.Marshal(&runtime.ingressControllerVals)
+		if err != nil {
+			log.Printf("error: %v", err)
+			return err
+		}
+		runtime.ingressControllerYamls =  string(templateYamls)
+	}
+	return nil
+}
+
+func (runtime *CelleryRuntime) CreateNameSpace(namespace string) error {
+	var cmd *exec.Cmd
+	cmd = exec.Command(
+		constants.KubeCtl,
+		"create",
+		"ns",
+		namespace)
+
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }

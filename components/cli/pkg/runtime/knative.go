@@ -19,34 +19,42 @@
 package runtime
 
 import (
+	"cellery.io/cellery/components/cli/pkg/kubernetes"
+	"cellery.io/cellery/components/cli/pkg/util"
 	"fmt"
+	"log"
 	"path/filepath"
 	"strings"
-	"time"
-
-	"cellery.io/cellery/components/cli/pkg/kubernetes"
 )
 
 func (runtime *CelleryRuntime) InstallKnativeServing() error {
-	for _, v := range buildKnativeYamlPaths(runtime.artifactsPath) {
-		err := kubernetes.ApplyFile(v)
-		if err != nil {
-			time.Sleep(10 * time.Second)
-			err = kubernetes.ApplyFile(v)
-			if err != nil {
-				return err
-			}
-		}
+	//for _, v := range buildKnativeYamlPaths(runtime.artifactsPath) {
+	//	err := kubernetes.ApplyFile(v)
+	//	if err != nil {
+	//		time.Sleep(10 * time.Second)
+	//		err = kubernetes.ApplyFile(v)
+	//		if err != nil {
+	//			return err
+	//		}
+	//	}
+	//}
+	log.Printf("Deploying knative-serving using knative chart")
+	if err := util.ApplyHelmChartWithDefaultValues("knative", "knative-serving"); err != nil {
+		return err
 	}
 	return nil
 }
 
 func (runtime *CelleryRuntime) ApplyKnativeCrds() error {
-	for _, v := range buildKnativeCrdsYamlPaths(runtime.artifactsPath) {
-		err := kubernetes.ApplyFile(v)
-		if err != nil {
-			return err
-		}
+	//for _, v := range buildKnativeCrdsYamlPaths(runtime.artifactsPath) {
+	//	err := kubernetes.ApplyFile(v)
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
+	log.Printf("Deploying knative system using knative-crd chart")
+	if err := util.ApplyHelmChartWithDefaultValues("knative-crd", "default"); err != nil {
+		return err
 	}
 	return nil
 }

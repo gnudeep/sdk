@@ -81,20 +81,20 @@ func RunSetupCreateCelleryRuntime(cli cli.Cli, complete bool, isPersistentVolume
 			return fmt.Errorf("failed to create persistent volume directories, %v", err)
 		}
 	}
-	dbHostName := constants.MysqlHostNameForExistingCluster
+	//dbHostName := constants.MysqlHostNameForExistingCluster
 	dbUserName := constants.CellerySqlUserName
 	dbPassword := constants.CellerySqlPassword
 	if hasNfsStorage {
-		dbHostName = db.DbHostName
+		//dbHostName = db.DbHostName
 		dbUserName = db.DbUserName
 		dbPassword = db.DbPassword
 		if err = cli.Runtime().UpdateNfsServerDetails(nfs.NfsServerIp, nfs.FileShare); err != nil {
 			return fmt.Errorf("failed to update nfs server details")
 		}
 	}
-	if err = cli.Runtime().UpdateMysqlCredentials(dbUserName, dbPassword, dbHostName); err != nil {
-		return fmt.Errorf("error updating mysql credentials: %v", err)
-	}
+	//if err = cli.Runtime().UpdateMysqlCredentials(dbUserName, dbPassword, dbHostName); err != nil {
+	//	return fmt.Errorf("error updating mysql credentials: %v", err)
+	//}
 	if err = cli.Runtime().UpdateInitSql(dbUserName, dbPassword); err != nil {
 		return fmt.Errorf("error updating mysql init script: %v", err)
 	}
@@ -122,15 +122,22 @@ func RunSetupCreateCelleryRuntime(cli cli.Cli, complete bool, isPersistentVolume
 		}); err != nil {
 		return fmt.Errorf("error creating istio crds: %v", err)
 	}
+	// Setup ingress-nginx namespace
+	if err = cli.ExecuteTask("Creating ingress-nginx namespace", "Failed to create ingress-nginx namespace",
+		"", func() error {
+			return cli.Runtime().CreateNameSpace("ingress-nginx")
+		}); err != nil {
+		return fmt.Errorf("error creating ingress-nginx namespace: %v", err)
+	}
 	// Apply nginx resources
 	if err = cli.ExecuteTask("Installing ingress-nginx", "Failed to install ingress-nginx",
 		"", func() error {
-			return cli.Runtime().InstallIngressNginx(isLoadBalancerIngressMode)
+			return cli.Runtime().InstallIngressNginx(isLoadBalancerIngressMode, nodePortIpAddress)
 		}); err != nil {
 		return fmt.Errorf("error installing ingress-nginx: %v", err)
 	}
 	// sleep for few seconds - this is to make sure that the CRDs are properly applied
-	cli.Sleep(20)
+	cli.Sleep(30)
 
 	// Enabling Istio injection
 	if err = cli.ExecuteTask("Enabling istio injection", "Failed to enabling istio injection",
@@ -140,12 +147,32 @@ func RunSetupCreateCelleryRuntime(cli cli.Cli, complete bool, isPersistentVolume
 		}); err != nil {
 		return fmt.Errorf("error enabling istio injection: %v", err)
 	}
+	// Setup istio namespace
+	if err = cli.ExecuteTask("Creating istio-system namespace", "Failed to create istio-system namespace",
+		"", func() error {
+			return cli.Runtime().CreateNameSpace("istio-system")
+		}); err != nil {
+		return fmt.Errorf("error creating istio-system namespace: %v", err)
+	}
+	// Insall istio
 	if err = cli.ExecuteTask("Installing istio", "Failed to install istio",
 		"", func() error {
 			return cli.Runtime().InstallIstio()
 		}); err != nil {
 		return fmt.Errorf("error installing istio: %v", err)
 	}
+
+	// sleep for few seconds - this is to make sure that the istio
+	cli.Sleep(30)
+
+	// Apply only knative serving CRD's
+	if err = cli.ExecuteTask("Applying knative CRDs", "Failed to apply knative CRDs",
+		"", func() error {
+			return cli.Runtime().ApplyKnativeCrds()
+		}); err != nil {
+		return fmt.Errorf("error installing knative serving: %v", err)
+	}
+
 	if cli.Runtime().IsGcpRuntime() {
 		// Install knative serving
 		if err = cli.ExecuteTask("Installing knative", "Failed to install knative",
@@ -155,13 +182,14 @@ func RunSetupCreateCelleryRuntime(cli cli.Cli, complete bool, isPersistentVolume
 			return fmt.Errorf("error installing knative: %v", err)
 		}
 	}
-	// Apply only knative serving CRD's
-	if err = cli.ExecuteTask("Applying knative CRDs", "Failed to apply knative CRDs",
-		"", func() error {
-			return cli.Runtime().ApplyKnativeCrds()
-		}); err != nil {
-		return fmt.Errorf("error installing knative serving: %v", err)
-	}
+	//// Apply only knative serving CRD's
+	//if err = cli.ExecuteTask("Applying knative CRDs", "Failed to apply knative CRDs",
+	//	"", func() error {
+	//		return cli.Runtime().ApplyKnativeCrds()
+	//	}); err != nil {
+	//	return fmt.Errorf("error installing knative serving: %v", err)
+	//}
+
 	// Apply controller CRDs
 	if err = cli.ExecuteTask("Installing controller", "Failed to install controller",
 		"", func() error {
@@ -177,22 +205,22 @@ func RunSetupCreateCelleryRuntime(cli cli.Cli, complete bool, isPersistentVolume
 			return fmt.Errorf("error configuring mysql: %v", err)
 		}
 	}
-	if err = cli.ExecuteTask("Creating config maps", "Failed to create config maps",
-		"", func() error {
-			return cli.Runtime().CreateConfigMaps()
-		}); err != nil {
-		return fmt.Errorf("error creating configmaps: %v", err)
-	}
-	if err = cli.ExecuteTask("Creating persistent volume", "Failed to create persistent volume",
-		"", func() error {
-			return cli.Runtime().CreatePersistentVolume(hasNfsStorage)
-		}); err != nil {
-		return fmt.Errorf("error creating persistent volume: %v", err)
-	}
+	//if err = cli.ExecuteTask("Creating config maps", "Failed to create config maps",
+	//	"", func() error {
+	//		return cli.Runtime().CreateConfigMaps()
+	//	}); err != nil {
+	//	return fmt.Errorf("error creating configmaps: %v", err)
+	//}
+	//if err = cli.ExecuteTask("Creating persistent volume", "Failed to create persistent volume",
+	//	"", func() error {
+	//		return cli.Runtime().CreatePersistentVolume(hasNfsStorage)
+	//	}); err != nil {
+	//	return fmt.Errorf("error creating persistent volume: %v", err)
+	//}
 	if complete {
 		if err = cli.ExecuteTask("Creating apim deployment", "Failed to create apim deployment",
 			"", func() error {
-				return cli.Runtime().AddApim(isPersistentVolume)
+				return cli.Runtime().AddApim(isPersistentVolume, nfs)
 			}); err != nil {
 			return fmt.Errorf("error creating apim deployment: %v", err)
 		}
@@ -205,20 +233,20 @@ func RunSetupCreateCelleryRuntime(cli cli.Cli, complete bool, isPersistentVolume
 	} else {
 		if err = cli.ExecuteTask("Creating idp deployment", "Failed to create idp deployment",
 			"", func() error {
-				return cli.Runtime().AddIdp()
+				return cli.Runtime().AddIdp(db)
 			}); err != nil {
 			return fmt.Errorf("error creating idp deployment: %v", err)
 		}
 	}
-	if !isLoadBalancerIngressMode {
-		if nodePortIpAddress != "" {
-			if err = cli.ExecuteTask("Updating nodeport ip address", "Failed to update nodeport ip address",
-				"", func() error {
-					return cli.Runtime().UpdateNodePortIpAddress(nodePortIpAddress)
-				}); err != nil {
-				return fmt.Errorf("failed to update nodeport ip address, %v", err)
-			}
-		}
-	}
+	//if !isLoadBalancerIngressMode {
+	//	if nodePortIpAddress != "" {
+	//		if err = cli.ExecuteTask("Updating nodeport ip address", "Failed to update nodeport ip address",
+	//			"", func() error {
+	//				return cli.Runtime().UpdateNodePortIpAddress(nodePortIpAddress)
+	//			}); err != nil {
+	//			return fmt.Errorf("failed to update nodeport ip address, %v", err)
+	//		}
+	//	}
+	//}
 	return cli.Runtime().WaitFor(false, false)
 }
