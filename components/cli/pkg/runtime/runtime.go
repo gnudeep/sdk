@@ -21,7 +21,6 @@ package runtime
 import (
 	"encoding/json"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"log"
 	"os"
 	"os/exec"
@@ -29,6 +28,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"gopkg.in/yaml.v2"
 
 	"github.com/hashicorp/go-version"
 
@@ -86,13 +87,13 @@ type Runtime interface {
 }
 
 type CelleryRuntime struct {
-	artifactsPath string
-	nfs           Nfs
-	db            MysqlDb
-	celleryRuntimeVals	CelleryRuntimeVals
-	celleryRuntimeYaml	string
-	ingressControllerVals	IngressController
-	ingressControllerYamls  string
+	artifactsPath          string
+	nfs                    Nfs
+	db                     MysqlDb
+	celleryRuntimeVals     CelleryRuntimeVals
+	celleryRuntimeYaml     string
+	ingressControllerVals  IngressController
+	ingressControllerYamls string
 }
 
 // NewCelleryRuntime returns a CelleryRuntime instance.
@@ -368,7 +369,7 @@ func (runtime *CelleryRuntime) UnmarshalHelmValues(chartName string) error {
 			log.Printf("Unmarshal error: %v", err)
 			return err
 		}
-	}else if chartName == "ingress-controller" {
+	} else if chartName == "ingress-controller" {
 		err = yaml.Unmarshal([]byte(defaultValues), &runtime.ingressControllerVals)
 		if err != nil {
 			log.Printf("Unmarshal error: %v", err)
@@ -392,7 +393,7 @@ func (runtime *CelleryRuntime) MarshalHelmValues(chartName string) error {
 			log.Printf("error: %v", err)
 			return err
 		}
-		runtime.ingressControllerYamls =  string(templateYamls)
+		runtime.ingressControllerYamls = string(templateYamls)
 	}
 	return nil
 }

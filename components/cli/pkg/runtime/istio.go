@@ -19,9 +19,10 @@
 package runtime
 
 import (
-	"cellery.io/cellery/components/cli/pkg/util"
 	"log"
 	"path/filepath"
+
+	"cellery.io/cellery/components/cli/pkg/util"
 )
 
 func (runtime *CelleryRuntime) ApplyIstioCrds() error {

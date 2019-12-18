@@ -19,19 +19,21 @@
 package util
 
 import (
-	"cellery.io/cellery/components/cli/pkg/constants"
-	"github.com/pkg/errors"
 	"io"
 	"io/ioutil"
-	"k8s.io/helm/pkg/chartutil"
-	"k8s.io/helm/pkg/manifest"
-	"k8s.io/helm/pkg/proto/hapi/chart"
-	"k8s.io/helm/pkg/renderutil"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/pkg/errors"
+	"k8s.io/helm/pkg/chartutil"
+	"k8s.io/helm/pkg/manifest"
+	"k8s.io/helm/pkg/proto/hapi/chart"
+	"k8s.io/helm/pkg/renderutil"
+
+	"cellery.io/cellery/components/cli/pkg/constants"
 )
 
 //Generate k8s artifacts using helm templates.
@@ -135,6 +137,7 @@ func ApplyK8sResource(operation string, tmplString string, namespace string) err
 	}
 	return nil
 }
+
 //Apply helm chart with default values
 func ApplyHelmChartWithDefaultValues(chartName string, namespace string) error {
 	chartTemplate := RenderHelmChart(chartName, namespace, filepath.Join(UserHomeCelleryDir(), constants.HelmCarts, chartName), "")

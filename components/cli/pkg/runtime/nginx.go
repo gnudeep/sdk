@@ -19,11 +19,12 @@
 package runtime
 
 import (
-	"cellery.io/cellery/components/cli/pkg/util"
 	"encoding/json"
 	"fmt"
 	"log"
 	"path/filepath"
+
+	"cellery.io/cellery/components/cli/pkg/util"
 
 	"github.com/mattbaird/jsonpatch"
 

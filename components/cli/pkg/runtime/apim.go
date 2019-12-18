@@ -19,10 +19,11 @@
 package runtime
 
 import (
-	"cellery.io/cellery/components/cli/pkg/util"
 	"fmt"
 	"path/filepath"
 	"strings"
+
+	"cellery.io/cellery/components/cli/pkg/util"
 
 	"cellery.io/cellery/components/cli/pkg/kubernetes"
 )

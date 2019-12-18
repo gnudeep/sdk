@@ -55,11 +55,11 @@ type CelleryRuntimeVals struct {
 	} `yaml:"global"`
 
 	Mysql struct {
-		Enabled      bool `yaml:"enabled"`
+		Enabled      bool   `yaml:"enabled"`
 		RootPassword string `yaml:"rootPassword"`
 
 		Persistence struct {
-			Enabled      bool `yaml:"enabled"`
+			Enabled      bool   `yaml:"enabled"`
 			StorageClass string `yaml:"storageClass"`
 			AccessMode   string `yaml:"accessMode"`
 			Size         string `yaml:"size"`
@@ -67,37 +67,37 @@ type CelleryRuntimeVals struct {
 		} `yaml:"persistence"`
 
 		Nfs struct {
-			Enabled        bool `yaml:"enabled"`
-			ServerIp       string `yaml:"serverIp"`
+			Enabled       bool   `yaml:"enabled"`
+			ServerIp      string `yaml:"serverIp"`
 			ShareLocation string `yaml:"shareLocation"`
 		} `yaml:"nfs"`
 
 		LocalStorage struct {
-			Enabled     bool `yaml:"enabled"`
+			Enabled     bool   `yaml:"enabled"`
 			StoragePath string `yaml:"storagePath"`
 		} `yaml:"localStorage"`
 	} `yaml:"mysql"`
 
 	Controller struct {
-		Enabled      bool `yaml:"enabled"`
+		Enabled bool `yaml:"enabled"`
 	} `yaml:"controller"`
 
 	ApiManager struct {
-		Enabled      bool `yaml:"enabled"`
+		Enabled     bool `yaml:"enabled"`
 		Persistence struct {
-			Enabled bool `yaml:"enabled"`
-			Media string `yaml:"media"`
-			NfsServerIp   string `yaml:"nfsServerIp"`
-			SharedLocation	string `yaml:"sharedLocation"`
+			Enabled        bool   `yaml:"enabled"`
+			Media          string `yaml:"media"`
+			NfsServerIp    string `yaml:"nfsServerIp"`
+			SharedLocation string `yaml:"sharedLocation"`
 		} `yaml:"persistence"`
 	} `yaml:"apim"`
 
 	Idp struct {
-		Enabled      bool `yaml:"enabled"`
+		Enabled bool `yaml:"enabled"`
 	} `yaml:"idp"`
 
 	ObservabilityPortal struct {
-		Enabled      bool `yaml:"enabled"`
+		Enabled bool `yaml:"enabled"`
 	} `yaml:"portal"`
 
 	Sp struct {
@@ -105,7 +105,7 @@ type CelleryRuntimeVals struct {
 	} `yaml:"sp"`
 
 	Grafana struct {
-		Enabled      bool `yaml:"enabled"`
+		Enabled bool `yaml:"enabled"`
 	} `yaml:"grafana"`
 
 	Prometheus struct {
@@ -125,7 +125,7 @@ type IngressController struct {
 				Tag string `yaml:"tag"`
 			} `yaml:"image"`
 			Service struct {
-				Type string `yaml:"type"`
+				Type        string   `yaml:"type"`
 				ExternalIPs []string `yaml:"externalIPs"`
 			} `yaml:"service"`
 		} `yaml:"controller"`

@@ -19,8 +19,9 @@
 package runtime
 
 import (
-	"cellery.io/cellery/components/cli/pkg/util"
 	"path/filepath"
+
+	"cellery.io/cellery/components/cli/pkg/util"
 
 	"cellery.io/cellery/components/cli/pkg/kubernetes"
 )

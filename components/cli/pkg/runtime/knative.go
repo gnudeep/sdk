@@ -19,12 +19,13 @@
 package runtime
 
 import (
-	"cellery.io/cellery/components/cli/pkg/kubernetes"
-	"cellery.io/cellery/components/cli/pkg/util"
 	"fmt"
 	"log"
 	"path/filepath"
 	"strings"
+
+	"cellery.io/cellery/components/cli/pkg/kubernetes"
+	"cellery.io/cellery/components/cli/pkg/util"
 )
 
 func (runtime *CelleryRuntime) InstallKnativeServing() error {
