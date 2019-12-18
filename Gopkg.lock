@@ -66,14 +66,6 @@
   revision = "25c3068a42a0b50b877953fb249dbcffc6bd1bca"
 
 [[projects]]
-  digest = "1:adca550fe1f92bdd68d7876290db30c1eec2fd51a2e25004f3979f36ca876130"
-  name = "github.com/cellery-io/sdk"
-  packages = ["components/cli/pkg/constants"]
-  pruneopts = "UT"
-  revision = "a4576f4207f8fe73ad174b1810dabd3dcd7bf47b"
-  version = "v0.5.0"
-
-[[projects]]
   branch = "master"
   digest = "1:454adc7f974228ff789428b6dc098638c57a64aa0718f0bd61e53d3cd39d7a75"
   name = "github.com/chzyer/readline"
@@ -718,7 +710,6 @@
   input-imports = [
     "cloud.google.com/go/storage",
     "github.com/99designs/keyring",
-    "github.com/cellery-io/sdk/components/cli/pkg/constants",
     "github.com/dgrijalva/jwt-go",
     "github.com/docker/distribution/manifest",
     "github.com/docker/distribution/manifest/schema1",
@@ -744,6 +735,7 @@
     "google.golang.org/api/container/v1",
     "google.golang.org/api/file/v1",
     "google.golang.org/api/sqladmin/v1beta4",
+    "gopkg.in/yaml.v2",
     "k8s.io/helm/pkg/chartutil",
     "k8s.io/helm/pkg/manifest",
     "k8s.io/helm/pkg/proto/hapi/chart",
