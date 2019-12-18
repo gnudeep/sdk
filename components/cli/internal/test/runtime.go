@@ -70,7 +70,11 @@ func (runtime *MockRuntime) IsComponentEnabled(component runtime.SystemComponent
 	return false, fmt.Errorf("failed to check status of runtime")
 }
 
-func (runtime *MockRuntime) AddApim(isPersistentVolume bool) error {
+func (runtime *MockRuntime) AddApim(isPersistentVolume bool, nfs runtime.Nfs, db runtime.MysqlDb) error {
+	return nil
+}
+
+func (runtime *MockRuntime) DeleteApim() error {
 	return nil
 }
 
@@ -82,7 +86,15 @@ func (runtime *MockRuntime) IsHpaEnabled() (bool, error) {
 	return false, nil
 }
 
-func (runtime *MockRuntime) AddIdp() error {
+func (runtime *MockRuntime) InstallHPA() error {
+	return nil
+}
+
+func (runtime *MockRuntime) AddIdp(db runtime.MysqlDb) error {
+	return nil
+}
+
+func (runtime *MockRuntime) DeleteIdp() error {
 	return nil
 }
 
@@ -119,7 +131,11 @@ func (runtime *MockRuntime) CreateCelleryNameSpace() error {
 	return nil
 }
 
-func (runtime *MockRuntime) InstallIngressNginx(isLoadBalancerIngressMode bool) error {
+func (runtime *MockRuntime) CreateNameSpace(namespace string) error {
+	return nil
+}
+
+func (runtime *MockRuntime) InstallIngressNginx(isLoadBalancerIngressMode bool, nodePortIpAddress string) error {
 	return nil
 }
 
@@ -160,5 +176,12 @@ func (runtime *MockRuntime) DeleteComponent(component runtime.SystemComponent) e
 }
 
 func (runtime *MockRuntime) Validate() error {
+	return nil
+}
+
+func (runtime *MockRuntime) UnmarshalHelmValues(chartName string) error {
+	return nil
+}
+func (runtime *MockRuntime) MarshalHelmValues(chartName string) error {
 	return nil
 }
