@@ -52,6 +52,13 @@
 [[constraint]]
   name = "github.com/tj/go-spin"
   version = "1.1.0"
+[[constraint]]
+  name = "k8s.io/helm"
+  version = "2.16.1"
+
+[[constraint]]
+  name = "gopkg.in/yaml.v2"
+  version = "2.2.2"
 
 [prune]
   go-tests = true
