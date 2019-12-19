@@ -48,6 +48,10 @@ func (runtime *CelleryRuntime) AddObservability() error {
 		"apply", runtime.celleryRuntimeYaml); err != nil {
 		return err
 	}
+	// Install istio agents
+	if err := util.ApplyHelmChartWithDefaultValues("cellery-istio-agents", "istio-system"); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -80,6 +84,12 @@ func (runtime *CelleryRuntime) DeleteObservability() error {
 		"delete", runtime.celleryRuntimeYaml); err != nil {
 		return err
 	}
+
+	if err := util.ApplyHelmChartWithDefaultValuesCustomCmd("cellery-istio-agents", "istio-system",
+		"delete"); err != nil {
+		return err
+	}
+
 	return nil
 }
 
