@@ -226,7 +226,7 @@ func RunSetupCreateCelleryRuntime(cli cli.Cli, complete bool, isPersistentVolume
 		}
 		if err = cli.ExecuteTask("Creating observability deployment", "Failed to create observability deployment",
 			"", func() error {
-				return cli.Runtime().AddObservability()
+				return cli.Runtime().AddObservability(db)
 			}); err != nil {
 			return fmt.Errorf("error creating observability deployment: %v", err)
 		}

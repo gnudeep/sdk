@@ -29,7 +29,7 @@ import (
 	"cellery.io/cellery/components/cli/pkg/kubernetes"
 )
 
-func (runtime *CelleryRuntime) AddObservability() error {
+func (runtime *CelleryRuntime) AddObservability(db MysqlDb) error {
 	//for _, v := range buildObservabilityYamlPaths(runtime.artifactsPath) {
 	//	err := kubernetes.ApplyFile(v)
 	//	if err != nil {
@@ -37,6 +37,11 @@ func (runtime *CelleryRuntime) AddObservability() error {
 	//	}
 	//}
 	runtime.UnmarshalHelmValues("cellery-runtime")
+	if runtime.IsGcpRuntime() {
+		runtime.celleryRuntimeVals.Global.CelleryRuntime.Db.Hostname = db.DbHostName
+		runtime.celleryRuntimeVals.Global.CelleryRuntime.Db.CarbonDb.Username = db.DbUserName
+		runtime.celleryRuntimeVals.Global.CelleryRuntime.Db.CarbonDb.Password = db.DbPassword
+	}
 	runtime.celleryRuntimeVals.ObservabilityPortal.Enabled = true
 	runtime.celleryRuntimeVals.ObservabilityAgent.Enabled = true
 	runtime.celleryRuntimeVals.Prometheus.Enabled = true

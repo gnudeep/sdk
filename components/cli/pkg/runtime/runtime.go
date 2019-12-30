@@ -73,7 +73,7 @@ type Runtime interface {
 	CreateConfigMaps() error
 	AddApim(isPersistentVolume bool, nfs Nfs, db MysqlDb) error
 	DeleteApim() error
-	AddObservability() error
+	AddObservability(db MysqlDb) error
 	AddIdp(db MysqlDb) error
 	DeleteIdp() error
 	UpdateNodePortIpAddress(nodePortIpAddress string) error
@@ -142,7 +142,7 @@ func (runtime *CelleryRuntime) AddComponent(component SystemComponent) error {
 	case IdentityProvider:
 		return runtime.AddIdp(MysqlDb{})
 	case Observability:
-		return runtime.AddObservability()
+		return runtime.AddObservability(MysqlDb{})
 	case ScaleToZero:
 		return runtime.InstallKnativeServing()
 	case HPA:
