@@ -25,6 +25,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -177,4 +178,21 @@ func CreateNameSpace(namespace string) error {
 
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
+}
+
+//Get current context to identify the current k8s cluster ID
+func GetK8sCurrentContext() (string, error) {
+	cmd := exec.Command("kubectl", "config", "current-context")
+	out, err := cmd.CombinedOutput()
+	log.Printf("kubectl current context: %s", string(out))
+	if err != nil {
+		log.Print("kubectl command execution", err)
+		return "", err
+	}
+	return string(out), nil
+}
+
+func GetCelleryClusterId(currentContext string) string {
+	re := regexp.MustCompile(`([\d]+)$`)
+	return strings.Join(re.FindAllString(currentContext, 1), "")
 }

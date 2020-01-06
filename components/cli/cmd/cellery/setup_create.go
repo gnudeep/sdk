@@ -31,6 +31,7 @@ import (
 
 func newSetupCreateCommand(cli cli.Cli) *cobra.Command {
 	artifactsPath := filepath.Join(cli.FileSystem().UserHome(), constants.CelleryHome, constants.K8sArtifacts)
+	//TODO: Backup helm artifacts.
 	os.RemoveAll(artifactsPath)
 	util.CopyDir(filepath.Join(cli.FileSystem().CelleryInstallationDir(), constants.K8sArtifacts), artifactsPath)
 	cli.Runtime().SetArtifactsPath(artifactsPath)

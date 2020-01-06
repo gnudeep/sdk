@@ -220,7 +220,7 @@ func RunSetupCreateCelleryRuntime(cli cli.Cli, complete bool, isPersistentVolume
 	if complete {
 		if err = cli.ExecuteTask("Creating apim deployment", "Failed to create apim deployment",
 			"", func() error {
-				return cli.Runtime().AddApim(isPersistentVolume, nfs, db)
+				return cli.Runtime().AddApim(true, isPersistentVolume, nfs, db)
 			}); err != nil {
 			return fmt.Errorf("error creating apim deployment: %v", err)
 		}
@@ -236,6 +236,13 @@ func RunSetupCreateCelleryRuntime(cli cli.Cli, complete bool, isPersistentVolume
 				return cli.Runtime().AddIdp(db)
 			}); err != nil {
 			return fmt.Errorf("error creating idp deployment: %v", err)
+		}
+
+		if err = cli.ExecuteTask("Creating apim deployment", "Failed to create apim deployment",
+			"", func() error {
+				return cli.Runtime().AddApim(false, isPersistentVolume, nfs, db)
+			}); err != nil {
+			return fmt.Errorf("error creating apim deployment: %v", err)
 		}
 	}
 	//if !isLoadBalancerIngressMode {

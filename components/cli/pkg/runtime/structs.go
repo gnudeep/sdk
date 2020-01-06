@@ -84,11 +84,20 @@ type CelleryRuntimeVals struct {
 
 	ApiManager struct {
 		Enabled     bool `yaml:"enabled"`
+
+		Deployment struct {
+			Enabled	bool `yaml:"enabled"`
+		} `yaml:"deployment"`
+
+		Datasources struct {
+			Enabled bool `yaml:"enabled"`
+		} `yaml:"datasources"`
+
 		Persistence struct {
 			Enabled        bool   `yaml:"enabled"`
 			Media          string `yaml:"media"`
 			NfsServerIp    string `yaml:"nfsServerIp"`
-			SharedLocation string `yaml:"sharedLocation"`
+			SharedLocation string `yaml:"sharedDeploymentLocation"`
 		} `yaml:"persistence"`
 	} `yaml:"apim"`
 

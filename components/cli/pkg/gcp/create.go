@@ -86,6 +86,7 @@ func (gcp *Gcp) getCreatedByLabel() map[string]string {
 	labels := make(map[string]string)
 	createdBy := util.ConvertToAlphanumeric(gcp.accountName, "_")
 	labels["created_by"] = createdBy
+//	labels["created_time"] = time.Now().Local().String()
 	return labels
 }
 

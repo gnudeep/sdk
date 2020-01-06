@@ -71,7 +71,7 @@ type Runtime interface {
 	InstallController() error
 	InstallMysql(isPersistentVolume bool) error
 	CreateConfigMaps() error
-	AddApim(isPersistentVolume bool, nfs Nfs, db MysqlDb) error
+	AddApim(isCompleteSetup bool, isPersistentVolume bool, nfs Nfs, db MysqlDb) error
 	DeleteApim() error
 	AddObservability(db MysqlDb) error
 	AddIdp(db MysqlDb) error
@@ -138,7 +138,7 @@ func (runtime *CelleryRuntime) CreateConfigMaps() error {
 func (runtime *CelleryRuntime) AddComponent(component SystemComponent) error {
 	switch component {
 	case ApiManager:
-		return runtime.AddApim(false, Nfs{}, MysqlDb{})
+		return runtime.AddApim(false,false, Nfs{}, MysqlDb{})
 	case IdentityProvider:
 		return runtime.AddIdp(MysqlDb{})
 	case Observability:
